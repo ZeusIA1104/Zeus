@@ -4,7 +4,7 @@ from fpdf import FPDF
 
 st.set_page_config(page_title="Zeus - Personal Trainer & Nutrição IA", layout="centered")
 
-# ---------- Funções auxiliares ----------
+# ---------- Funções Auxiliares ----------
 
 def calcular_imc(peso, altura):
     """Calcula o IMC."""
@@ -26,12 +26,12 @@ def classificar_imc(imc):
     else:
         return "Obesidade Grau III"
 
-# Função para gerar PDF com o plano completo
 def gerar_pdf(titulo, conteudo):
+    """Gera um PDF com o conteúdo fornecido."""
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", size=12)
-    pdf.cell(200, 10, txt=titulo, ln=True, align="C")
+    pdf.cell(200, 10, txt=titulo, ln=True, align='C')
     pdf.ln(10)
     for linha in conteudo:
         pdf.multi_cell(0, 10, txt=linha)
@@ -40,7 +40,7 @@ def gerar_pdf(titulo, conteudo):
     return pdf_path
 
 # ---------- Treinos ----------
-# Dicionário com várias opções para cada grupo muscular e objetivo
+# Dicionário com várias opções de treino para cada grupo muscular e objetivo
 treinos = {
     "Peito": {
         "Hipertrofia": [
@@ -327,9 +327,9 @@ dietas = {
     }
 }
 
-def montar_dieta(objetivo, tipo_alim):
-    if objetivo in dietas and tipo_alim in dietas[objetivo]:
-        return dietas[objetivo][tipo_alim]
+def montar_dieta(objetivo_dieta, tipo_alim):
+    if objetivo_dieta in dietas and tipo_alim in dietas[objetivo_dieta]:
+        return dietas[objetivo_dieta][tipo_alim]
     else:
         return []
 
@@ -354,7 +354,7 @@ def receitas_fitness():
         "Salada de quinoa com vegetais"
     ]
 
-# ---------- Interface e PDF ----------
+# ---------- Interface e Geração de PDF ----------
 
 def gerar_pdf(plano_treino, plano_dieta, suplemento, rec):
     pdf = FPDF()
@@ -433,12 +433,12 @@ elif menu == "Dieta":
         st.subheader("Dieta Sugerida:")
         for refeicao, desc, kcal in plano_dieta:
             st.write(f"*{refeicao}*: {desc} ({kcal} kcal)")
-        total_calorias = sum([kcal for ,,kcal in plano_dieta])
+        total_calorias = sum([kcal for _, _, kcal in plano_dieta])
         st.write(f"*Total estimado de calorias:* {total_calorias} kcal")
 
 # ----- Suplementos e Receitas -----
 elif menu == "Suplementos e Receitas":
-    st.header("Suplementos e Receitas Fitness")
+    st.header("Dicas de Suplementos e Receitas Fitness")
     objetivo_nutri = st.selectbox("Objetivo nutricional", ["Emagrecimento", "Hipertrofia", "Ganho de Massa Muscular", "Manutenção"])
     st.subheader("Suplementos Sugeridos:")
     sup = dicas_suplementos(objetivo_nutri)
@@ -454,9 +454,9 @@ elif menu == "Gerar PDF":
     st.header("Gerar PDF do Plano Completo")
     st.write("Preencha os dados para gerar o PDF.")
     
-    # Para treino: se o usuário já gerou um plano, podemos solicitar que cole ou digite o conteúdo.
+    # Se o usuário já gerou planos, pode inserir aqui ou digitar manualmente:
     plano_treino_input = st.text_area("Digite seu plano de treino (uma linha por exercício):")
-    plano_dieta_input = st.text_area("Digite seu plano de dieta (uma linha por refeição, com descrições e kcal):")
+    plano_dieta_input = st.text_area("Digite seu plano de dieta (uma linha por refeição, com descrição e kcal):")
     suplementos_input = st.text_area("Digite os suplementos sugeridos (uma linha por item):")
     receitas_input = st.text_area("Digite as receitas (uma linha por receita):")
     
