@@ -1,6 +1,0 @@
-import streamlit as st
-
-st.set_page_config(page_title="Zeus", layout="centered")
-
-st.title("Zeus - Assistente de Treinos e Dietas")
-st.write("Seja bem-vindo! Em breve o Zeus estará 100% funcional.")
