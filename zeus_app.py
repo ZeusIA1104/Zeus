@@ -7,12 +7,12 @@ st.set_page_config(page_title="Zeus - Personal Trainer & Nutrição IA", layout=
 # ---------- Funções Auxiliares ----------
 
 def calcular_imc(peso, altura):
-    """Calcula o IMC."""
+    """Calcula o IMC (Índice de Massa Corporal)."""
     imc = peso / (altura ** 2)
     return round(imc, 2)
 
 def classificar_imc(imc):
-    """Classifica o IMC."""
+    """Classifica o IMC em categorias."""
     if imc < 18.5:
         return "Abaixo do peso"
     elif imc < 25:
@@ -26,12 +26,23 @@ def classificar_imc(imc):
     else:
         return "Obesidade Grau III"
 
+def calcular_calorias_basais(genero, peso, altura, idade):
+    """
+    Calcula o metabolismo basal (BMR) usando a fórmula de Mifflin-St Jeor.
+    Altura deve ser informada em metros; a função converte para centímetros.
+    """
+    altura_cm = altura * 100
+    if genero == "Masculino":
+        return 10 * peso + 6.25 * altura_cm - 5 * idade + 5
+    else:
+        return 10 * peso + 6.25 * altura_cm - 5 * idade - 161
+
 def gerar_pdf(titulo, conteudo):
-    """Gera um PDF com o conteúdo fornecido."""
+    """Gera um PDF com o conteúdo passado."""
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", size=12)
-    pdf.cell(200, 10, txt=titulo, ln=True, align='C')
+    pdf.cell(200, 10, txt=titulo, ln=True, align="C")
     pdf.ln(10)
     for linha in conteudo:
         pdf.multi_cell(0, 10, txt=linha)
@@ -40,7 +51,7 @@ def gerar_pdf(titulo, conteudo):
     return pdf_path
 
 # ---------- Treinos ----------
-# Dicionário com várias opções de treino para cada grupo muscular e objetivo
+# Cada grupo muscular possui diversas opções de treino para cada objetivo
 treinos = {
     "Peito": {
         "Hipertrofia": [
@@ -151,7 +162,7 @@ treinos = {
             "Rosca alternada - 4x10",
             "Rosca concentrada - 3x12",
             "Rosca Scott - 3x10",
-            "Rosca 21's - 3x7 (cada segmento)"
+            "Rosca 21's - 3x7 (dividido em segmentos)"
         ],
         "Emagrecimento": [
             "Rosca com peso leve - 4x15",
@@ -232,9 +243,9 @@ treinos = {
         "Resistência": [
             "Abdominal 4x30",
             "Prancha 4x1min",
-            "Abdominal isométrico 3x1min",
-            "Abdominal oblíquo contínuo 3x1min",
-            "Crunch contínuo 3x1min",
+            "Abdominal isométrico - 3x1min",
+            "Abdominal oblíquo contínuo - 3x1min",
+            "Crunch contínuo - 3x1min",
             "Circuito de abdômen com baixa pausa"
         ],
         "Ganho de Massa Muscular": [
@@ -334,7 +345,6 @@ def montar_dieta(objetivo_dieta, tipo_alim):
         return []
 
 # ---------- Suplementos e Receitas ----------
-
 def dicas_suplementos(objetivo):
     if objetivo == "Emagrecimento":
         return ["Cafeína", "L-Carnitina", "Chá verde"]
@@ -355,7 +365,6 @@ def receitas_fitness():
     ]
 
 # ---------- Interface e Geração de PDF ----------
-
 def gerar_pdf(plano_treino, plano_dieta, suplemento, rec):
     pdf = FPDF()
     pdf.add_page()
@@ -395,19 +404,25 @@ def gerar_pdf(plano_treino, plano_dieta, suplemento, rec):
     return pdf_path
 
 # ---------- Interface Streamlit ----------
-
 st.title("ZEUS - Personal Trainer & Nutrição IA")
 
 # Menu lateral
-menu = st.sidebar.selectbox("Selecione a função", ["IMC", "Treino", "Dieta", "Suplementos e Receitas", "Gerar PDF"])
+menu = st.sidebar.selectbox("Selecione a função", 
+    ["IMC", "Treino", "Dieta", "Suplementos e Receitas", "Gerar PDF"])
+
+# Dados do usuário (usados em várias seções)
+with st.sidebar:
+    st.header("Dados do Usuário")
+    peso_usuario = st.number_input("Peso (kg)", min_value=30.0, max_value=200.0, step=0.5)
+    altura_usuario = st.number_input("Altura (m)", min_value=1.0, max_value=2.5, step=0.01)
+    genero_usuario = st.selectbox("Gênero", ["Masculino", "Feminino", "Outro"])
+    idade_usuario = st.number_input("Idade", min_value=10, max_value=100, step=1)
 
 # ----- IMC -----
 if menu == "IMC":
     st.header("Calculadora de IMC")
-    peso = st.number_input("Peso (kg)", min_value=30.0, max_value=200.0, step=0.5)
-    altura = st.number_input("Altura (m)", min_value=1.0, max_value=2.5, step=0.01)
     if st.button("Calcular IMC"):
-        imc = calcular_imc(peso, altura)
+        imc = calcular_imc(peso_usuario, altura_usuario)
         st.write(f"Seu IMC é: {imc:.2f}")
         st.write(f"Classificação: {classificar_imc(imc)}")
 
@@ -415,7 +430,8 @@ if menu == "IMC":
 elif menu == "Treino":
     st.header("Plano de Treino Personalizado")
     grupo = st.selectbox("Grupo muscular", ["Peito", "Costas", "Pernas", "Braços", "Ombros", "Abdômen"])
-    objetivo_treino = st.selectbox("Objetivo do treino", ["Hipertrofia", "Emagrecimento", "Resistência", "Ganho de Massa Muscular"])
+    objetivo_treino = st.selectbox("Objetivo do treino", 
+        ["Hipertrofia", "Emagrecimento", "Resistência", "Ganho de Massa Muscular"])
     if st.button("Gerar Treino"):
         plano_treino = gerar_treino(grupo, objetivo_treino)
         st.subheader("Treino Sugerido:")
@@ -425,9 +441,10 @@ elif menu == "Treino":
 # ----- Dieta -----
 elif menu == "Dieta":
     st.header("Plano Alimentar Personalizado")
-    objetivo_dieta = st.selectbox("Objetivo da dieta", ["Emagrecimento", "Hipertrofia", "Ganho de Massa Muscular", "Manutenção"])
-    tipo_alim = st.selectbox("Tipo de alimentação", ["Tradicional", "Low Carb", "Vegetariana", "Outro"])
-    peso_dieta = st.number_input("Seu peso (kg) para dieta", min_value=30.0, max_value=200.0, step=0.5)
+    objetivo_dieta = st.selectbox("Objetivo da dieta", 
+        ["Emagrecimento", "Hipertrofia", "Ganho de Massa Muscular", "Manutenção"])
+    tipo_alim = st.selectbox("Tipo de alimentação", 
+        ["Tradicional", "Low Carb", "Vegetariana", "Outro"])
     if st.button("Gerar Dieta"):
         plano_dieta = montar_dieta(objetivo_dieta, tipo_alim)
         st.subheader("Dieta Sugerida:")
@@ -435,11 +452,21 @@ elif menu == "Dieta":
             st.write(f"*{refeicao}*: {desc} ({kcal} kcal)")
         total_calorias = sum([kcal for _, _, kcal in plano_dieta])
         st.write(f"*Total estimado de calorias:* {total_calorias} kcal")
+        
+        # Calcular calorias basais usando Mifflin-St Jeor
+        # Converter altura de metros para centímetros
+        altura_cm = altura_usuario * 100
+        if genero_usuario == "Masculino":
+            bmr = 10 * peso_usuario + 6.25 * altura_cm - 5 * idade_usuario + 5
+        else:
+            bmr = 10 * peso_usuario + 6.25 * altura_cm - 5 * idade_usuario - 161
+        st.write(f"*Metabolismo Basal (BMR):* {int(bmr)} kcal/dia")
 
 # ----- Suplementos e Receitas -----
 elif menu == "Suplementos e Receitas":
     st.header("Dicas de Suplementos e Receitas Fitness")
-    objetivo_nutri = st.selectbox("Objetivo nutricional", ["Emagrecimento", "Hipertrofia", "Ganho de Massa Muscular", "Manutenção"])
+    objetivo_nutri = st.selectbox("Objetivo nutricional", 
+        ["Emagrecimento", "Hipertrofia", "Ganho de Massa Muscular", "Manutenção"])
     st.subheader("Suplementos Sugeridos:")
     sup = dicas_suplementos(objetivo_nutri)
     for s in sup:
@@ -452,9 +479,8 @@ elif menu == "Suplementos e Receitas":
 # ----- Gerar PDF -----
 elif menu == "Gerar PDF":
     st.header("Gerar PDF do Plano Completo")
-    st.write("Preencha os dados para gerar o PDF.")
+    st.write("Preencha os campos abaixo se desejar inserir manualmente ou copie os resultados dos módulos anteriores.")
     
-    # Se o usuário já gerou planos, pode inserir aqui ou digitar manualmente:
     plano_treino_input = st.text_area("Digite seu plano de treino (uma linha por exercício):")
     plano_dieta_input = st.text_area("Digite seu plano de dieta (uma linha por refeição, com descrição e kcal):")
     suplementos_input = st.text_area("Digite os suplementos sugeridos (uma linha por item):")
