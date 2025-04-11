@@ -1,101 +1,120 @@
 import streamlit as st
+from fpdf import FPDF
 
-# Título do app
-st.title("Zeus - Seu Personal Trainer Virtual")
-
-# Menu principal
-menu = st.sidebar.selectbox("Escolha uma opção", [
-    "Calculadora de IMC",
-    "Montar Treino",
-    "Montar Dieta",
-    "Suplementos e Receitas"
-])
-
-# Função de cálculo de IMC
+# Funções auxiliares
 def calcular_imc(peso, altura):
-    imc = peso / (altura ** 2)
+    return peso / (altura ** 2)
+
+def gerar_pdf(dieta, treino):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    pdf.cell(200, 10, txt="Plano Personalizado Zeus", ln=True, align='C')
+    pdf.ln(10)
+    pdf.cell(200, 10, txt="Treino:", ln=True)
+    for item in treino:
+        pdf.cell(200, 10, txt=f"- {item}", ln=True)
+    pdf.ln(10)
+    pdf.cell(200, 10, txt="Dieta:", ln=True)
+    for item in dieta:
+        pdf.cell(200, 10, txt=f"- {item}", ln=True)
+
+    pdf_path = "/tmp/zeus_plano.pdf"
+    pdf.output(pdf_path)
+    return pdf_path
+
+# Dados de treinos
+treinos_por_objetivo = {
+    "Hipertrofia": {
+        "Peito": ["Supino reto", "Supino inclinado", "Crucifixo", "Crossover", "Flexão de braço", "Peck deck"],
+        "Costas": ["Puxada frontal", "Remada curvada", "Puxada fechada", "Remada baixa", "Levantamento terra"],
+        "Pernas": ["Agachamento livre", "Leg press", "Cadeira extensora", "Mesa flexora", "Afundo com halteres"],
+    },
+    "Emagrecimento": {
+        "Full body": ["Jumping jack", "Agachamento com salto", "Burpee", "Mountain climber", "Corrida parada"],
+    },
+    "Ganho de Massa Muscular": {
+        "Bíceps": ["Rosca direta", "Rosca martelo", "Rosca alternada", "Rosca concentrada", "Rosca Scott"],
+        "Tríceps": ["Tríceps pulley", "Tríceps testa", "Mergulho entre bancos", "Tríceps corda", "Tríceps francês"],
+    }
+}
+
+# Dietas por objetivo
+dietas_por_objetivo = {
+    "Hipertrofia": [
+        "Café da manhã: 5 claras, 2 ovos, 1 banana, 40g de aveia (350 kcal)",
+        "Almoço: 150g de arroz, 150g de frango, legumes (600 kcal)",
+        "Jantar: 200g de carne vermelha, batata doce, salada (550 kcal)"
+    ],
+    "Emagrecimento": [
+        "Café da manhã: 1 fatia de pão integral, 1 ovo, café sem açúcar (150 kcal)",
+        "Almoço: 100g de arroz integral, 120g de frango grelhado, salada (400 kcal)",
+        "Jantar: Sopa de legumes com frango desfiado (300 kcal)"
+    ],
+    "Ganho de Massa Muscular": [
+        "Café da manhã: Shake com 1 banana, 1 scoop de whey, aveia e leite (400 kcal)",
+        "Almoço: 150g arroz, 200g frango, feijão, salada (650 kcal)",
+        "Jantar: Omelete com 4 ovos, aveia, 1 fatia pão integral (500 kcal)"
+    ]
+}
+
+# Streamlit interface
+st.title("ZEUS - Inteligência Artificial Fitness")
+st.markdown("Monte seu treino e dieta personalizados.")
+
+# Dados do usuário
+with st.sidebar:
+    st.header("Seus dados")
+    genero = st.selectbox("Gênero", ["Masculino", "Feminino", "Outro"])
+    peso = st.number_input("Peso (kg)", min_value=30.0, max_value=200.0, step=0.5)
+    altura = st.number_input("Altura (m)", min_value=1.0, max_value=2.5, step=0.01)
+    objetivo = st.selectbox("Objetivo", list(dietas_por_objetivo.keys()))
+
+# IMC
+if peso and altura:
+    imc = calcular_imc(peso, altura)
+    st.markdown(f"*Seu IMC:* {imc:.2f}")
     if imc < 18.5:
-        return imc, "Abaixo do peso"
+        st.info("Você está abaixo do peso.")
     elif imc < 25:
-        return imc, "Peso normal"
+        st.success("Peso ideal!")
     elif imc < 30:
-        return imc, "Sobrepeso"
+        st.warning("Sobrepeso.")
     else:
-        return imc, "Obesidade"
+        st.error("Obesidade.")
 
-# Página 1 - IMC
-if menu == "Calculadora de IMC":
-    st.header("Cálculo de IMC")
-    peso = st.number_input("Informe seu peso (kg)", min_value=30.0, max_value=200.0)
-    altura = st.number_input("Informe sua altura (m)", min_value=1.0, max_value=2.5)
-    if st.button("Calcular IMC"):
-        imc, classificacao = calcular_imc(peso, altura)
-        st.success(f"Seu IMC é {imc:.2f} - {classificacao}")
+# Treino
+st.header("Plano de Treino")
+treino_escolhido = []
+if objetivo in treinos_por_objetivo:
+    for grupo, exercicios in treinos_por_objetivo[objetivo].items():
+        selecionados = st.multiselect(f"{grupo}:", exercicios)
+        treino_escolhido.extend(selecionados)
+else:
+    st.write("Objetivo ainda sem treinos cadastrados.")
 
-# Página 2 - Treinos
-elif menu == "Montar Treino":
-    st.header("Montar Treino")
-    objetivo = st.selectbox("Qual seu objetivo?", ["Hipertrofia", "Definição", "Resistência"])
-    nivel = st.selectbox("Qual seu nível de treino?", ["Iniciante", "Intermediário", "Avançado"])
-    
-    if st.button("Gerar Treino"):
-        if objetivo == "Hipertrofia":
-            treino = {
-                "Peito": ["Supino Reto", "Supino Inclinado", "Crossover"],
-                "Costas": ["Puxada Aberta", "Remada Curvada", "Levantamento Terra"],
-                "Pernas": ["Agachamento Livre", "Leg Press", "Cadeira Extensora"]
-            }
-        elif objetivo == "Definição":
-            treino = {
-                "Circuito Fullbody": ["Flexão", "Agachamento", "Burpee", "Abdominal", "Corrida leve 10min"]
-            }
-        else:
-            treino = {
-                "Funcional": ["Corrida", "Pliometria", "Battle Rope", "Box Jump"]
-            }
-        for grupo, exercicios in treino.items():
-            st.subheader(grupo)
-            for ex in exercicios:
-                st.write(f"- {ex}")
+# Dieta
+st.header("Plano de Dieta")
+dieta_escolhida = dietas_por_objetivo[objetivo]
+for item in dieta_escolhida:
+    st.write(item)
 
-# Página 3 - Dietas
-elif menu == "Montar Dieta":
-    st.header("Montar Dieta Personalizada")
-    objetivo_dieta = st.selectbox("Objetivo da dieta", ["Emagrecimento", "Hipertrofia", "Manutenção"])
-    genero = st.radio("Gênero", ["Masculino", "Feminino"])
-    peso = st.number_input("Peso atual (kg)", min_value=30.0, max_value=200.0)
-    altura = st.number_input("Altura (m)", min_value=1.0, max_value=2.5)
-    idade = st.number_input("Idade", min_value=10, max_value=100)
+# Suplementos e receitas
+st.header("Dicas de Suplementos e Receitas")
+if objetivo == "Hipertrofia":
+    st.markdown("- Whey protein após o treino")
+    st.markdown("- Creatina 3g ao dia")
+    st.markdown("- Receita: Panqueca de banana com aveia e ovos")
+elif objetivo == "Emagrecimento":
+    st.markdown("- Cafeína pré-treino")
+    st.markdown("- Chá verde ao longo do dia")
+    st.markdown("- Receita: Omelete de legumes com clara de ovo")
+else:
+    st.markdown("- Albumina à noite")
+    st.markdown("- Hipercalórico entre refeições")
 
-    if st.button("Gerar Dieta"):
-        calorias_base = (10 * peso + 6.25 * (altura * 100) - 5 * idade + (5 if genero == "Masculino" else -161))
-        if objetivo_dieta == "Emagrecimento":
-            calorias = calorias_base - 500
-        elif objetivo_dieta == "Hipertrofia":
-            calorias = calorias_base + 400
-        else:
-            calorias = calorias_base
-
-        st.success(f"Recomendação calórica diária: {int(calorias)} kcal")
-        st.subheader("Dieta exemplo:")
-        st.write("- Café da manhã: 2 ovos, 1 banana, aveia, 1 scoop de whey")
-        st.write("- Almoço: 150g arroz, 150g frango, salada à vontade")
-        st.write("- Lanche: 1 iogurte natural + castanhas")
-        st.write("- Jantar: Omelete com legumes ou shake de proteína")
-
-# Página 4 - Suplementos e Receitas
-elif menu == "Suplementos e Receitas":
-    st.header("Suplementos e Receitas")
-    tipo_info = st.radio("O que deseja ver?", ["Suplementos", "Receitas saudáveis"])
-    
-    if tipo_info == "Suplementos":
-        st.subheader("Suplementos recomendados:")
-        st.write("- Whey Protein: reconstrução muscular")
-        st.write("- Creatina: força e desempenho")
-        st.write("- Cafeína: energia e foco")
-        st.write("- Multivitamínico: suporte geral")
-    else:
-        st.subheader("Receitas Fit:")
-        st.write("1. Panqueca de banana e aveia")
-        st.write("2. Shake de proteína com morango")
-        st.write("3. Omelete com legumes e frango")
+# Geração do PDF
+if st.button("Gerar PDF com Plano"):
+    pdf_path = gerar_pdf(dieta_escolhida, treino_escolhido)
+    with open(pdf_path, "rb") as f:
+        st.download_button("Baixar PDF", f, file_name="zeus_plano.pdf")
