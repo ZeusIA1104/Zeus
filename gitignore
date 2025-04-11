@@ -1,0 +1,94 @@
+import streamlit as st
+from transformers import pipeline
+from fpdf import FPDF
+import datetime
+import base64
+
+st.set_page_config(page_title="Zeus - Seu parceiro de treino e ADM", layout="centered")
+st.title("Zeus - Assistente Pessoal de Treino, Dieta e Administração")
+st.markdown("Converse com o *Zeus* sobre treino, dieta ou ADM. Agora com memória, PDF, upload de arquivos e modo coach!")
+
+# Carregar modelo
+@st.cache_resource
+def load_zeus():
+    return pipeline("text-generation", model="EleutherAI/gpt-neo-1.3B")
+
+zeus = load_zeus()
+
+# Inicializar sessão
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+
+if "coach_mode" not in st.session_state:
+    st.session_state.coach_mode = False
+
+# Botão para limpar memória
+if st.button("Limpar Memória"):
+    st.session_state.chat_history = []
+    st.success("Memória limpa!")
+
+# Modo coach
+st.subheader("Modo Coach")
+if st.checkbox("Ativar Modo Coach"):
+    objetivo = st.selectbox("Qual seu objetivo?", ["Perder gordura", "Ganhar massa", "Manter peso"])
+    peso = st.number_input("Peso (kg)", min_value=30, max_value=200, value=72)
+    altura = st.number_input("Altura (cm)", min_value=130, max_value=220, value=172)
+    idade = st.number_input("Idade", min_value=10, max_value=100, value=19)
+    sexo = st.selectbox("Sexo", ["Masculino", "Feminino"])
+    if st.button("Montar Plano"):
+        plano_prompt = f"Monte um plano completo de treino e dieta para um {sexo.lower()} com {idade} anos, {peso}kg e {altura}cm, com objetivo de {objetivo.lower()}."
+        resposta = zeus(plano_prompt, max_length=250, do_sample=True, temperature=0.7)[0]["generated_text"]
+        st.text_area("Plano gerado pelo Zeus", resposta[len(plano_prompt):].strip(), height=200)
+
+# Entrada principal do chat
+st.subheader("Conversa com Zeus")
+user_input = st.text_input("Você:", "")
+
+if user_input:
+    st.session_state.chat_history.append(f"Você: {user_input}")
+    prompt = "\n".join(st.session_state.chat_history[-5:])
+    resposta = zeus(prompt, max_length=200, do_sample=True, temperature=0.7)[0]["generated_text"]
+    resposta_formatada = resposta[len(prompt):].strip()
+    st.session_state.chat_history.append(f"Zeus: {resposta_formatada}")
+
+# Mostrar histórico
+for linha in st.session_state.chat_history[-10:]:
+    if linha.startswith("Você:"):
+        st.markdown(f"*{linha}*")
+    else:
+        st.markdown(linha)
+
+# Exportar conversa
+st.subheader("Exportar conversa")
+if st.button("Exportar como .txt"):
+    conversa = "\n".join(st.session_state.chat_history)
+    path = "/mnt/data/historico_zeus.txt"
+    with open(path, "w") as f:
+        f.write(conversa)
+    st.success("Conversa salva com sucesso!")
+    st.markdown(f"[Clique aqui para baixar]({path})")
+
+# Geração de PDF de plano
+st.subheader("Gerar PDF de plano")
+tipo = st.selectbox("Tipo de plano", ["Dieta", "Treino"])
+titulo = st.text_input("Título do plano", f"{tipo} personalizada - {datetime.date.today()}")
+conteudo = st.text_area("Conteúdo do plano", height=200)
+
+if st.button("Gerar PDF"):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    pdf.cell(200, 10, txt=titulo, ln=True, align="C")
+    pdf.ln(10)
+    for linha in conteudo.split("\n"):
+        pdf.multi_cell(0, 10, linha)
+    pdf_path = "/mnt/data/zeus_plano.pdf"
+    pdf.output(pdf_path)
+    st.success("PDF gerado com sucesso!")
+    st.markdown(f"[Clique aqui para baixar o PDF]({pdf_path})")
+
+# Upload de arquivos
+st.subheader("Upload de arquivos")
+uploaded_file = st.file_uploader("Envie imagem ou PDF de treino/dieta", type=["jpg", "jpeg", "png", "pdf"])
+if uploaded_file:
+    st.success(f"Arquivo '{uploaded_file.name}' enviado com sucesso! (Leitura automática em versão futura)")
