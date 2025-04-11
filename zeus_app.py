@@ -56,4 +56,4 @@ else:
 # Rodapé
 st.markdown("---")
 st.caption(f"Zeus IA - {datetime.now().year} | Desenvolvido com Streamlit")
-
+# Atualização de teste para forçar o deploy
