@@ -1,5 +1,6 @@
-from datetime import datetime
 import streamlit as st
+import requests
+
 import sqlite3
 import hashlib
 from datetime import date
@@ -36,6 +37,21 @@ def criar_banco():
     """)
     conn.commit()
     conn.close()
+
+
+# ------------------ Verificação de Pagamento ------------------
+def verificar_pagamento(email_usuario):
+    token = "APP_USR-507730409898756-041401-cfb0d18f342ea0b8ada862a23497b9ca-1026722362"
+    url = f"https://api.mercadopago.com/v1/payments/search?access_token={token}&query={email_usuario}"
+    headers = {"Content-Type": "application/json"}
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        pagamentos = response.json().get("results", [])
+        for p in pagamentos:
+            if p["status"] == "approved" and p["transaction_amount"] == 49.9:
+                return True
+    return False
+
 
 # ------------------ Funções auxiliares ------------------
 def hash_senha(senha):
@@ -104,33 +120,44 @@ def gerar_pdf(titulo, conteudo):
 
 
 # ------------------ Início da Aplicação ------------------
-st.title("ZEUS - Personal Trainer & Nutrição IA")
+st.set_page_config(page_title="Zeus - Personal Trainer & Nutrição IA", layout="centered")
+criar_banco()
+st.title("Zeus - Acesso ao Sistema")
 
-nome_usuario = st.text_input("Nome de usuário:")
-senha_usuario = st.text_input("Senha:", type="password")
-codigo_digitado = st.text_input("Código de Acesso Mensal", type="password")
+menu = st.selectbox("Menu", ["Login", "Cadastrar"])
+email = st.text_input("Email")
+senha = st.text_input("Senha", type="password")
 
-if st.button("Entrar"):
-    if not (nome_usuario and senha_usuario and codigo_digitado):
-        st.warning("Preencha todos os campos.")
-        st.stop()
+if menu == "Cadastrar":
+    nome = st.text_input("Nome completo")
+    genero = st.selectbox("Gênero", ["Masculino", "Feminino", "Outro"])
+    peso = st.number_input("Peso (kg)", 30.0, 200.0)
+    altura = st.number_input("Altura (m)", 1.0, 2.5)
+    objetivo = st.selectbox("Objetivo", ["Hipertrofia", "Emagrecimento", "Manutenção", "Ganho de Massa Muscular"])
+    if st.button("Cadastrar"):
+        try:
+            conn = sqlite3.connect("zeus_usuarios.db")
+            cursor = conn.cursor()
+            cursor.execute("INSERT INTO usuarios (nome, email, senha, genero, peso, altura, objetivo) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                           (nome, email, hash_senha(senha), genero, peso, altura, objetivo))
+            conn.commit()
+            conn.close()
+            st.success("Usuário cadastrado com sucesso!")
+        except:
+            st.error("Erro: Email já está cadastrado ou dados inválidos.")
 
-    mes_atual = datetime.now().month
-    codigo_esperado = f"{nome_usuario.lower()}123-{mes_atual}"
+elif menu == "Login":
+    if st.button("Entrar"):
+        user = verificar_login(email, senha)
+        if user:
+            st.success(f"Bem-vindo, {user[1]}!")
+            st.session_state["usuario"] = user
+            if user[1].lower() != "guilherme" and not verificar_pagamento(user[2]):
+                st.error("Pagamento não identificado. Por favor, realize o pagamento para acessar.")
+                st.stop()
 
-    if codigo_digitado != codigo_esperado:
-        st.error("Código inválido.")
-        st.stop()
-
-    if not validar_login(nome_usuario, senha_usuario):
-        st.error("Login ou senha inválidos.")
-        st.stop()
-
-    if not verificar_pagamento(nome_usuario):
-        st.error("Usuário ainda não foi liberado.")
-        st.stop()
-
-    st.success("Login realizado com sucesso!")
+        else:
+            st.error("Email ou senha incorretos.")
 
 # ------------------ Painel do Usuário ------------------
 if "usuario" in st.session_state:
@@ -677,7 +704,7 @@ elif aba == "Dieta da Semana":
         st.subheader(f"Dieta semanal para: {objetivo_dieta}")
         plano_dieta_semana = []
         for dia, refeicoes in dieta_dias.items():
-            st.markdown(f"*{dia}*")
+            st.markdown(f"{dia}")
             for refeicao, descricao, kcal in refeicoes:
                 st.write(f"- {refeicao}: {descricao} ({kcal} kcal)")
                 plano_dieta_semana.append(f"{dia} - {refeicao}: {descricao} ({kcal} kcal)")
@@ -707,26 +734,3 @@ elif aba == "Gerar PDF":
         pdf_path = gerar_pdf("Plano Zeus", conteudo)
         with open(pdf_path, "rb") as f:
             st.download_button("Baixar PDF", f, file_name="Plano_Zeus.pdf")
-
-
-
-# ---------- Tela de Administração (Apenas Admin) ----------
-if nome_usuario.lower() == "guilherme":
-    st.sidebar.markdown("---")
-    if st.sidebar.button("Acessar Painel de Admin"):
-        st.subheader("Painel do Administrador")
-        st.markdown("Gerencie os usuários e marque como 'pago'.")
-        try:
-            import pandas as pd
-            df_users = pd.read_csv("usuarios_zeus.csv")
-            for i, row in df_users.iterrows():
-                col1, col2, col3, col4 = st.columns([3, 4, 2, 2])
-                col1.write(f"*Usuário:* {row['nome']}")
-                col2.write(f"*Email:* {row['email']}")
-                col3.write(f"*Pago:* {'✅' if row['pago'] else '❌'}")
-                if col4.button("Marcar como pago", key=f"pago_{i}"):
-                    df_users.at[i, 'pago'] = True
-                    df_users.to_csv("usuarios_zeus.csv", index=False)
-                    st.success(f"{row['nome']} marcado como pago!")
-        except FileNotFoundError:
-            st.warning("Nenhum usuário cadastrado ainda.")
