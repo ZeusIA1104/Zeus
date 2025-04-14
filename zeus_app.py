@@ -717,7 +717,7 @@ elif aba == "Gerar PDF":
 
 
 # ---------- Tela de Administração (Apenas Admin) ----------
-if "nome_usuario" in locals() and nome_usuario.lower() == "guilhermeadm6":
+if nome_usuario.lower() == "guilherme":
     st.sidebar.markdown("---")
     if st.sidebar.button("Acessar Painel de Admin"):
         st.subheader("Painel do Administrador")
