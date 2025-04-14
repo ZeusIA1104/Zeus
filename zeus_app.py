@@ -1,4 +1,4 @@
-[00:23, 14/04/2025] gui daniel: import streamlit as st
+import streamlit as st
 import sqlite3
 import hashlib
 from datetime import date
