@@ -736,3 +736,24 @@ if nome_usuario.lower() == "guilherme":
                     st.success(f"{row['nome']} marcado como pago!")
         except FileNotFoundError:
             st.warning("Nenhum usuário cadastrado ainda.")
+# ---------- Painel de Administração (Apenas Admin) ----------
+if "nome_usuario" in locals() and nome_usuario.lower() == "guilhermeadm6":
+    st.sidebar.markdown("---")
+    if st.sidebar.button("Acessar Painel de Admin"):
+        st.subheader("Painel do Administrador")
+        st.markdown("Gerencie os usuários e marque como 'pago'.")
+
+        try:
+            import pandas as pd
+            df_users = pd.read_csv("usuarios_zeus.csv")
+            for i, row in df_users.iterrows():
+                col1, col2, col3, col4 = st.columns([3, 4, 2, 2])
+                col1.write(f"*Usuário:* {row['nome']}")
+                col2.write(f"*Email:* {row['email']}")
+                col3.write(f"*Pago:* {'✅' if row['pago'] else '❌'}")
+                if col4.button("Marcar como pago", key=f"pago_{i}"):
+                    df_users.at[i, 'pago'] = True
+                    df_users.to_csv("usuarios_zeus.csv", index=False)
+                    st.success(f"{row['nome']} marcado como pago!")
+        except FileNotFoundError:
+            st.warning("Nenhum usuário cadastrado ainda.")
