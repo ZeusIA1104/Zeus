@@ -103,40 +103,33 @@ def gerar_pdf(titulo, conteudo):
 
 
 # ------------------ Início da Aplicação ------------------
-st.set_page_config(page_title="Zeus - Personal Trainer & Nutrição IA", layout="centered")
-criar_banco()
-st.title("Zeus - Acesso ao Sistema")
+st.title("ZEUS - Personal Trainer & Nutrição IA")
 
-menu = st.selectbox("Menu", ["Login", "Cadastrar"])
-email = st.text_input("Email")
-senha = st.text_input("Senha", type="password")
+nome_usuario = st.text_input("Nome de usuário:")
+senha_usuario = st.text_input("Senha:", type="password")
+codigo_digitado = st.text_input("Código de Acesso Mensal", type="password")
 
-if menu == "Cadastrar":
-    nome = st.text_input("Nome completo")
-    genero = st.selectbox("Gênero", ["Masculino", "Feminino", "Outro"])
-    peso = st.number_input("Peso (kg)", 30.0, 200.0)
-    altura = st.number_input("Altura (m)", 1.0, 2.5)
-    objetivo = st.selectbox("Objetivo", ["Hipertrofia", "Emagrecimento", "Manutenção", "Ganho de Massa Muscular"])
-    if st.button("Cadastrar"):
-        try:
-            conn = sqlite3.connect("zeus_usuarios.db")
-            cursor = conn.cursor()
-            cursor.execute("INSERT INTO usuarios (nome, email, senha, genero, peso, altura, objetivo) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                           (nome, email, hash_senha(senha), genero, peso, altura, objetivo))
-            conn.commit()
-            conn.close()
-            st.success("Usuário cadastrado com sucesso!")
-        except:
-            st.error("Erro: Email já está cadastrado ou dados inválidos.")
+if st.button("Entrar"):
+    if not (nome_usuario and senha_usuario and codigo_digitado):
+        st.warning("Preencha todos os campos.")
+        st.stop()
 
-elif menu == "Login":
-    if st.button("Entrar"):
-        user = verificar_login(email, senha)
-        if user:
-            st.success(f"Bem-vindo, {user[1]}!")
-            st.session_state["usuario"] = user
-        else:
-            st.error("Email ou senha incorretos.")
+    mes_atual = datetime.now().month
+    codigo_esperado = f"{nome_usuario.lower()}123-{mes_atual}"
+
+    if codigo_digitado != codigo_esperado:
+        st.error("Código inválido.")
+        st.stop()
+
+    if not validar_login(nome_usuario, senha_usuario):
+        st.error("Login ou senha inválidos.")
+        st.stop()
+
+    if not verificar_pagamento(nome_usuario):
+        st.error("Usuário ainda não foi liberado.")
+        st.stop()
+
+    st.success("Login realizado com sucesso!")
 
 # ------------------ Painel do Usuário ------------------
 if "usuario" in st.session_state:
