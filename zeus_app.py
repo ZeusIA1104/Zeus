@@ -5,6 +5,24 @@ from datetime import date
 from fpdf import FPDF
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
+# ------------------ Verificação de Pagamento ------------------
+import requests
+
+ACCESS_TOKEN = "APP_USR-507730409898756-041401-cfb0d18f342ea0b8ada862a23497b9ca-1026722362"
+PRECO_MENSAL = 49.90
+
+def verificar_pagamento(email_usuario):
+    url = f"https://api.mercadopago.com/v1/payments/search?access_token={ACCESS_TOKEN}&status=approved&sort=date_created&criteria=desc"
+    headers = {"Authorization": f"Bearer {ACCESS_TOKEN}"}
+    response = requests.get(url, headers=headers)
+
+    if response.status_code == 200:
+        pagamentos = response.json().get("results", [])
+        for pagamento in pagamentos:
+            if pagamento.get("payer", {}).get("email") == email_usuario:
+                return True
+    return False
+
 
 # ------------------ Banco de dados ------------------
 def criar_banco():
@@ -139,6 +157,20 @@ elif menu == "Login":
             st.error("Email ou senha incorretos.")
 
 # ------------------ Painel do Usuário ------------------
+if "usuario" in st.session_state:
+    user = st.session_state["usuario"]
+    email_usuario = user[2]
+
+    if email_usuario == "guibarcellosdaniel6@gmail.com":
+        acesso_liberado = True
+    else:
+        acesso_liberado = verificar_pagamento(email_usuario)
+
+    if not acesso_liberado:
+        st.warning("Acesso restrito. Efetue o pagamento de R$49,90 para desbloquear as funcionalidades.")
+        st.markdown("[Clique aqui para pagar](https://www.mercadopago.com.br/checkout/v1/redirect?preference-id=YOUR_PREFERENCE_ID)")
+        st.stop()
+
 if "usuario" in st.session_state:
     user = st.session_state["usuario"]
     st.markdown(f"## Painel de Controle - {user[1]}")
