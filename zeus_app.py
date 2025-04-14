@@ -1,6 +1,4 @@
 import streamlit as st
-import requests
-
 import sqlite3
 import hashlib
 from datetime import date
@@ -37,21 +35,6 @@ def criar_banco():
     """)
     conn.commit()
     conn.close()
-
-
-# ------------------ Verificação de Pagamento ------------------
-def verificar_pagamento(email_usuario):
-    token = "APP_USR-507730409898756-041401-cfb0d18f342ea0b8ada862a23497b9ca-1026722362"
-    url = f"https://api.mercadopago.com/v1/payments/search?access_token={token}&query={email_usuario}"
-    headers = {"Content-Type": "application/json"}
-    response = requests.get(url, headers=headers)
-    if response.status_code == 200:
-        pagamentos = response.json().get("results", [])
-        for p in pagamentos:
-            if p["status"] == "approved" and p["transaction_amount"] == 49.9:
-                return True
-    return False
-
 
 # ------------------ Funções auxiliares ------------------
 def hash_senha(senha):
@@ -152,10 +135,6 @@ elif menu == "Login":
         if user:
             st.success(f"Bem-vindo, {user[1]}!")
             st.session_state["usuario"] = user
-            if user[1].lower() != "guilherme" and not verificar_pagamento(user[2]):
-                st.error("Pagamento não identificado. Por favor, realize o pagamento para acessar.")
-                st.stop()
-
         else:
             st.error("Email ou senha incorretos.")
 
