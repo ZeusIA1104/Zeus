@@ -165,6 +165,223 @@ if "usuario" in st.session_state:
         conn.commit()
         conn.close()
         st.success("Progresso registrado com sucesso!")
+
+
+treinos = {
+    "Peito": {
+        "Hipertrofia": [
+            "Supino reto com barra - 4x10",
+            "Supino inclinado com halteres - 4x10",
+            "Crucifixo reto - 3x12",
+            "Crossover - 3x15",
+            "Peck deck - 3x12"
+        ],
+        "Emagrecimento": [
+            "Flex\u00f5es - 4x20",
+            "Supino reto leve - 3x20",
+            "Crossover cont\u00ednuo - 3x20",
+            "Peck deck leve - 3x20",
+            "Flex\u00e3o com apoio - 4x15"
+        ],
+        "Resist\u00eancia": [
+            "Flex\u00f5es inclinadas - 4x25",
+            "Supino reto com isometria - 3x30s",
+            "Crucifixo leve - 3x25",
+            "Flex\u00f5es declinadas - 3x20",
+            "Crossover alternado - 3x30"
+        ],
+        "Ganho de Massa Muscular": [
+            "Supino reto pesado - 5x5",
+            "Supino inclinado com barra - 4x6",
+            "Crucifixo inclinado com halteres - 4x8",
+            "Crossover com peso - 3x8",
+            "Peck deck pesado - 4x8"
+        ]
+    },
+    "Ombro": {
+        "Hipertrofia": [
+            "Eleva\u00e7\u00e3o lateral - 4x12",
+            "Desenvolvimento com barra - 4x10",
+            "Eleva\u00e7\u00e3o frontal - 3x12",
+            "Remada alta - 3x12",
+            "Desenvolvimento Arnold - 3x10"
+        ],
+        "Emagrecimento": [
+            "Eleva\u00e7\u00e3o lateral leve - 4x15",
+            "Desenvolvimento com halteres leves - 3x15",
+            "Eleva\u00e7\u00e3o alternada - 3x20",
+            "Circuito de ombros com peso corporal - 3x20",
+            "Remada com el\u00e1stico - 3x20"
+        ],
+        "Resist\u00eancia": [
+            "Eleva\u00e7\u00e3o lateral cont\u00ednua - 4x20",
+            "Desenvolvimento leve - 4x20",
+            "Remada alta leve - 3x20",
+            "Exerc\u00edcio de isometria - 3x30s",
+            "Eleva\u00e7\u00e3o frontal com pausa - 3x20"
+        ],
+        "Ganho de Massa Muscular": [
+            "Desenvolvimento com halteres pesados - 5x6",
+            "Eleva\u00e7\u00e3o lateral com peso - 4x8",
+            "Arnold press - 4x8",
+            "Desenvolvimento militar - 4x6",
+            "Face pull com carga - 4x10"
+        ]
+    },
+    "B\u00edceps": {
+        "Hipertrofia": [
+            "Rosca direta com barra - 4x10",
+            "Rosca martelo com halteres - 4x10",
+            "Rosca alternada - 4x10",
+            "Rosca concentrada - 3x12",
+            "Rosca Scott - 3x10"
+        ],
+        "Emagrecimento": [
+            "Rosca leve com alta repeti\u00e7\u00e3o - 4x20",
+            "Rosca alternada leve - 4x20",
+            "Rosca com el\u00e1stico - 3x25",
+            "Rosca com isometria - 3x30s",
+            "Circuito de b\u00edceps - 3x20"
+        ],
+        "Resist\u00eancia": [
+            "Rosca direta leve - 4x20",
+            "Rosca martelo com repeti\u00e7\u00e3o cont\u00ednua - 3x25",
+            "Rosca concentrada - 4x20",
+            "Rosca com tempo sob tens\u00e3o - 3x20",
+            "Curl 21's leve - 3x7"
+        ],
+        "Ganho de Massa Muscular": [
+            "Rosca direta com barra pesada - 5x6",
+            "Rosca martelo com peso - 4x6",
+            "Rosca alternada com carga - 4x8",
+            "Rosca concentrada - 4x8",
+            "Rosca no cabo - 3x10"
+        ]
+    },
+    "Tr\u00edceps": {
+        "Hipertrofia": [
+            "Tr\u00edceps testa - 4x10",
+            "Tr\u00edceps pulley com barra - 4x10",
+            "Tr\u00edceps corda - 4x12",
+            "Mergulho entre bancos - 3x12",
+            "Tr\u00edceps franc\u00eas - 3x10"
+        ],
+        "Emagrecimento": [
+            "Tr\u00edceps com el\u00e1stico - 4x15",
+            "Flex\u00e3o fechada - 3x20",
+            "Tr\u00edceps banco - 3x15",
+            "Pulley leve - 3x20",
+            "Extens\u00e3o leve acima da cabe\u00e7a - 3x20"
+        ],
+        "Resist\u00eancia": [
+            "Tr\u00edceps cont\u00ednuo no banco - 4x20",
+            "Tr\u00edceps corda leve - 3x25",
+            "Pulley com isometria - 3x30s",
+            "Flex\u00e3o fechada isom\u00e9trica - 3x20",
+            "Circuito de tr\u00edceps - 3x20"
+        ],
+        "Ganho de Massa Muscular": [
+            "Tr\u00edceps pulley pesado - 5x6",
+            "Tr\u00edceps franc\u00eas com peso - 4x8",
+            "Tr\u00edceps corda pesado - 4x8",
+            "Mergulho com peso - 4x6",
+            "Supino fechado - 4x8"
+        ]
+    },
+    "Pernas": {
+        "Hipertrofia": [
+            "Agachamento livre - 4x10",
+            "Leg press - 4x10",
+            "Cadeira extensora - 3x12",
+            "Mesa flexora - 3x12",
+            "Stiff com barra - 4x8"
+        ],
+        "Emagrecimento": [
+            "Agachamento com peso corporal - 4x20",
+            "Afundo alternado - 4x15",
+            "Leg press leve - 4x15",
+            "Cadeira extensora leve - 3x20",
+            "Step-ups em banco - 3x15"
+        ],
+        "Resist\u00eancia": [
+            "Agachamento - 4x20",
+            "Cadeira extensora leve - 3x20",
+            "Mesa flexora leve - 3x20",
+            "Afundo est\u00e1tico - 4x20",
+            "Polichinelos com agachamento - 3x25"
+        ],
+        "Ganho de Massa Muscular": [
+            "Agachamento livre pesado - 5x6",
+            "Leg press pesado - 5x8",
+            "Cadeira extensora pesada - 4x8",
+            "Mesa flexora pesada - 4x8",
+            "Avan\u00e7o com halteres - 4x10"
+        ]
+    },
+    "Costas": {
+        "Hipertrofia": [
+            "Remada curvada com barra - 4x10",
+            "Puxada alta na polia - 4x10",
+            "Remada cavalinho - 4x10",
+            "Levantamento terra - 4x8",
+            "Remada unilateral - 4x10"
+        ],
+        "Emagrecimento": [
+            "Puxada alta leve - 4x15",
+            "Remada com el\u00e1stico - 4x20",
+            "Remada inversa - 3x20",
+            "Puxada com tri\u00e2ngulo - 3x15",
+            "Burpee com remada - 4x30s"
+        ],
+        "Resist\u00eancia": [
+            "Remada leve - 4x20",
+            "Puxada aberta cont\u00ednua - 3x25",
+            "Remada serrote leve - 3x20",
+            "Remada no banco - 4x20",
+            "Puxada com isometria - 3x30s"
+        ],
+        "Ganho de Massa Muscular": [
+            "Barra fixa com peso - 4x6",
+            "Remada curvada pesada - 5x6",
+            "Remada unilateral com halteres - 4x8",
+            "Puxada fechada - 4x8",
+            "Levantamento terra pesado - 4x6"
+        ]
+    },
+    "Gl\u00fateos": {
+        "Hipertrofia": [
+            "Eleva\u00e7\u00e3o de quadril com barra - 4x10",
+            "Agachamento sum\u00f4 - 4x10",
+            "Avan\u00e7o com peso - 4x10",
+            "Cadeira abdutora - 3x12",
+            "Extens\u00e3o de quadril na polia - 3x15"
+        ],
+        "Emagrecimento": [
+            "Glute bridge com peso corporal - 4x20",
+            "Agachamento lateral - 4x15",
+            "Eleva\u00e7\u00e3o de quadril unilateral - 3x15",
+            "Afundo alternado - 3x20",
+            "Step up - 3x15"
+        ],
+        "Resist\u00eancia": [
+            "Ponte de gl\u00fateo - 4x20",
+            "Agachamento com isometria - 3x30s",
+            "Extens\u00e3o com el\u00e1stico - 3x25",
+            "Cadeira abdutora leve - 3x20",
+            "Afundo com pausa - 3x20"
+        ],
+        "Ganho de Massa Muscular": [
+            "Hip thrust pesado - 5x6",
+            "Avan\u00e7o com barra - 4x8",
+            "Extens\u00e3o de quadril com carga - 4x8",
+            "Cadeira abdutora pesada - 4x10",
+            "Agachamento sum\u00f4 com peso - 4x8"
+        ]
+    }
+}
+
+
+
 # ------------------ Treinos por grupo muscular e objetivo ------------------
 
 treinos = {
