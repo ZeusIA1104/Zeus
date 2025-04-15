@@ -743,4 +743,4 @@ elif aba == "Gerar PDF":
         conteudo = ["Plano de Treino:"] + treino + ["", "Plano de Dieta:"] + dieta + ["", "Suplementos:"] + suplementos + ["", "Receitas:"] + receitas
         pdf_path = gerar_pdf("Plano Zeus", conteudo)
         with open(pdf_path, "rb") as f:
-            st.download_button("Baixar PDF", f, file_name="Plano_Zeus.pdf"
+            st.download_button("Baixar PDF", f, file_name="Plano_Zeus.pdf")
