@@ -5,20 +5,6 @@ from datetime import date
 from fpdf import FPDF
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
-# zeus_app.py com sistema de pagamento integrado
-import streamlit as st
-import sqlite3
-import hashlib
-from datetime import date
-from fpdf import FPDF
-import matplotlib.pyplot as plt
-import plotly.graph_objects as go
-import requests
-
-# ------------------ Configurações ------------------
-ACCESS_TOKEN = "APP_USR-507730409898756-041401-cfb0d18f342ea0b8ada862a23497b9ca-1026722362"
-PRECO = 49.90
-EMAIL_ADMIN = "guibarcellosdaniel6@gmail.com"
 
 # ------------------ Banco de dados ------------------
 def criar_banco():
@@ -154,6 +140,17 @@ elif menu == "Login":
 
 # ------------------ Painel do Usuário ------------------
 if "usuario" in st.session_state:
+
+# ------------------ Verificação de Pagamento ------------------
+pagamento_confirmado = False
+if user[1].lower() == conta_admin[0] or user[2].lower() == conta_admin[1]:
+    pagamento_confirmado = True
+else:
+    pagamento_confirmado = verificar_pagamento(user[2])
+    if not pagamento_confirmado:
+        st.warning("Seu pagamento ainda não foi confirmado. Por favor, finalize o pagamento para acessar o conteúdo.")
+        st.stop()
+
     user = st.session_state["usuario"]
     st.markdown(f"## Painel de Controle - {user[1]}")
 
