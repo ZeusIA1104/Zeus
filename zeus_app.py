@@ -5,37 +5,6 @@ from datetime import date
 from fpdf import FPDF
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
-import requests
-
-def gerar_link_pagamento():
-    url = "https://api.mercadopago.com/checkout/preferences"
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer APP_USR-507730409898756-041401-cfb0d18f342ea0b8ada862a23497b9ca-1026722362"
-    }
-    payload = {
-        "items": [
-            {
-                "title": "Acesso Zeus - Mensal",
-                "quantity": 1,
-                "currency_id": "BRL",
-                "unit_price": 49.90
-            }
-        ],
-        "back_urls": {
-            "success": "https://zeusinteligente.streamlit.app",
-            "failure": "https://zeusinteligente.streamlit.app",
-            "pending": "https://zeusinteligente.streamlit.app"
-        },
-        "auto_return": "approved"
-    }
-
-    response = requests.post(url, json=payload, headers=headers)
-    if response.status_code == 201:
-        return response.json()["init_point"]
-    else:
-        return None
-
 
 # ------------------ Banco de dados ------------------
 def criar_banco():
@@ -67,7 +36,7 @@ def criar_banco():
     conn.commit()
     conn.close()
 
-# ------------------ FunÃ§Ãµes auxiliares ------------------
+# ------------------ Funções auxiliares ------------------
 def hash_senha(senha):
     return hashlib.sha256(senha.encode()).hexdigest()
 
@@ -114,7 +83,7 @@ def grafico_imc(usuario_id, altura):
         pesos = [r[1] for r in registros]
         imcs = [round(p / (altura ** 2), 2) for p in pesos]
         fig = go.Figure(data=go.Scatter(x=datas, y=imcs, mode='lines+markers'))
-        fig.update_layout(title="EvoluÃ§Ã£o do IMC", xaxis_title="Data", yaxis_title="IMC")
+        fig.update_layout(title="Evolução do IMC", xaxis_title="Data", yaxis_title="IMC")
         st.plotly_chart(fig)
     else:
         st.info("Nenhum dado de progresso registrado ainda.")
@@ -133,8 +102,8 @@ def gerar_pdf(titulo, conteudo):
 
 
 
-# ------------------ InÃ­cio da AplicaÃ§Ã£o ------------------
-st.set_page_config(page_title="Zeus - Personal Trainer & NutriÃ§Ã£o IA", layout="centered")
+# ------------------ Início da Aplicação ------------------
+st.set_page_config(page_title="Zeus - Personal Trainer & Nutrição IA", layout="centered")
 criar_banco()
 st.title("Zeus - Acesso ao Sistema")
 
@@ -144,10 +113,10 @@ senha = st.text_input("Senha", type="password")
 
 if menu == "Cadastrar":
     nome = st.text_input("Nome completo")
-    genero = st.selectbox("GÃªnero", ["Masculino", "Feminino", "Outro"])
+    genero = st.selectbox("Gênero", ["Masculino", "Feminino", "Outro"])
     peso = st.number_input("Peso (kg)", 30.0, 200.0)
     altura = st.number_input("Altura (m)", 1.0, 2.5)
-    objetivo = st.selectbox("Objetivo", ["Hipertrofia", "Emagrecimento", "ManutenÃ§Ã£o", "Ganho de Massa Muscular"])
+    objetivo = st.selectbox("Objetivo", ["Hipertrofia", "Emagrecimento", "Manutenção", "Ganho de Massa Muscular"])
     if st.button("Cadastrar"):
         try:
             conn = sqlite3.connect("zeus_usuarios.db")
@@ -156,9 +125,9 @@ if menu == "Cadastrar":
                            (nome, email, hash_senha(senha), genero, peso, altura, objetivo))
             conn.commit()
             conn.close()
-            st.success("UsuÃ¡rio cadastrado com sucesso!")
+            st.success("Usuário cadastrado com sucesso!")
         except:
-            st.error("Erro: Email jÃ¡ estÃ¡ cadastrado ou dados invÃ¡lidos.")
+            st.error("Erro: Email já está cadastrado ou dados inválidos.")
 
 elif menu == "Login":
     if st.button("Entrar"):
@@ -169,7 +138,7 @@ elif menu == "Login":
         else:
             st.error("Email ou senha incorretos.")
 
-# ------------------ Painel do UsuÃ¡rio ------------------
+# ------------------ Painel do Usuário ------------------
 if "usuario" in st.session_state:
     user = st.session_state["usuario"]
     st.markdown(f"## Painel de Controle - {user[1]}")
@@ -181,10 +150,10 @@ if "usuario" in st.session_state:
         imc = calcular_imc(user[5], user[6])
         st.metric("IMC", imc, classificar_imc(imc))
 
-    st.markdown("### EvoluÃ§Ã£o do IMC")
+    st.markdown("### Evolução do IMC")
     grafico_imc(user[0], user[6])
 
-    st.markdown("### Registrar Progresso DiÃ¡rio")
+    st.markdown("### Registrar Progresso Diário")
     novo_peso = st.number_input("Peso de hoje (kg)", 30.0, 200.0, step=0.1)
     calorias = st.number_input("Calorias consumidas hoje", 0, 8000)
     treino = st.text_input("Treino realizado")
@@ -425,17 +394,17 @@ treinos = {
             "Peck deck - 3x12"
         ],
         "Emagrecimento": [
-            "FlexÃµes - 4x20",
+            "Flexões - 4x20",
             "Supino reto leve - 3x20",
-            "Crossover contÃ­nuo - 3x20",
+            "Crossover contínuo - 3x20",
             "Peck deck leve - 3x20",
-            "FlexÃ£o com apoio - 4x15"
+            "Flexão com apoio - 4x15"
         ],
-        "ResistÃªncia": [
-            "FlexÃµes inclinadas - 4x25",
+        "Resistência": [
+            "Flexões inclinadas - 4x25",
             "Supino reto com isometria - 3x30s",
             "Crucifixo leve - 3x25",
-            "FlexÃµes declinadas - 3x20",
+            "Flexões declinadas - 3x20",
             "Crossover alternado - 3x30"
         ],
         "Ganho de Massa Muscular": [
@@ -448,35 +417,35 @@ treinos = {
     },
     "Ombro": {
         "Hipertrofia": [
-            "ElevaÃ§Ã£o lateral - 4x12",
+            "Elevação lateral - 4x12",
             "Desenvolvimento com barra - 4x10",
-            "ElevaÃ§Ã£o frontal - 3x12",
+            "Elevação frontal - 3x12",
             "Remada alta - 3x12",
             "Desenvolvimento Arnold - 3x10"
         ],
         "Emagrecimento": [
-            "ElevaÃ§Ã£o lateral leve - 4x15",
+            "Elevação lateral leve - 4x15",
             "Desenvolvimento com halteres leves - 3x15",
-            "ElevaÃ§Ã£o alternada - 3x20",
+            "Elevação alternada - 3x20",
             "Circuito de ombros com peso corporal - 3x20",
-            "Remada com elÃ¡stico - 3x20"
+            "Remada com elástico - 3x20"
         ],
-        "ResistÃªncia": [
-            "ElevaÃ§Ã£o lateral contÃ­nua - 4x20",
+        "Resistência": [
+            "Elevação lateral contínua - 4x20",
             "Desenvolvimento leve - 4x20",
             "Remada alta leve - 3x20",
-            "ExercÃ­cio de isometria - 3x30s",
-            "ElevaÃ§Ã£o frontal com pausa - 3x20"
+            "Exercício de isometria - 3x30s",
+            "Elevação frontal com pausa - 3x20"
         ],
         "Ganho de Massa Muscular": [
             "Desenvolvimento com halteres pesados - 5x6",
-            "ElevaÃ§Ã£o lateral com peso - 4x8",
+            "Elevação lateral com peso - 4x8",
             "Arnold press - 4x8",
             "Desenvolvimento militar - 4x6",
             "Face pull com carga - 4x10"
         ]
     },
-    "BÃ­ceps": {
+    "Bíceps": {
         "Hipertrofia": [
             "Rosca direta com barra - 4x10",
             "Rosca martelo com halteres - 4x10",
@@ -485,17 +454,17 @@ treinos = {
             "Rosca Scott - 3x10"
         ],
         "Emagrecimento": [
-            "Rosca leve com alta repetiÃ§Ã£o - 4x20",
+            "Rosca leve com alta repetição - 4x20",
             "Rosca alternada leve - 4x20",
-            "Rosca com elÃ¡stico - 3x25",
+            "Rosca com elástico - 3x25",
             "Rosca com isometria - 3x30s",
-            "Circuito de bÃ­ceps - 3x20"
+            "Circuito de bíceps - 3x20"
         ],
-        "ResistÃªncia": [
+        "Resistência": [
             "Rosca direta leve - 4x20",
-            "Rosca martelo com repetiÃ§Ã£o contÃ­nua - 3x25",
+            "Rosca martelo com repetição contínua - 3x25",
             "Rosca concentrada - 4x20",
-            "Rosca com tempo sob tensÃ£o - 3x20",
+            "Rosca com tempo sob tensão - 3x20",
             "Curl 21's leve - 3x7"
         ],
         "Ganho de Massa Muscular": [
@@ -506,32 +475,32 @@ treinos = {
             "Rosca no cabo - 3x10"
         ]
     },
-    "TrÃ­ceps": {
+    "Tríceps": {
         "Hipertrofia": [
-            "TrÃ­ceps testa - 4x10",
-            "TrÃ­ceps pulley com barra - 4x10",
-            "TrÃ­ceps corda - 4x12",
+            "Tríceps testa - 4x10",
+            "Tríceps pulley com barra - 4x10",
+            "Tríceps corda - 4x12",
             "Mergulho entre bancos - 3x12",
-            "TrÃ­ceps francÃªs - 3x10"
+            "Tríceps francês - 3x10"
         ],
         "Emagrecimento": [
-            "TrÃ­ceps com elÃ¡stico - 4x15",
-            "FlexÃ£o fechada - 3x20",
-            "TrÃ­ceps banco - 3x15",
+            "Tríceps com elástico - 4x15",
+            "Flexão fechada - 3x20",
+            "Tríceps banco - 3x15",
             "Pulley leve - 3x20",
-            "ExtensÃ£o leve acima da cabeÃ§a - 3x20"
+            "Extensão leve acima da cabeça - 3x20"
         ],
-        "ResistÃªncia": [
-            "TrÃ­ceps contÃ­nuo no banco - 4x20",
-            "TrÃ­ceps corda leve - 3x25",
+        "Resistência": [
+            "Tríceps contínuo no banco - 4x20",
+            "Tríceps corda leve - 3x25",
             "Pulley com isometria - 3x30s",
-            "FlexÃ£o fechada isomÃ©trica - 3x20",
-            "Circuito de trÃ­ceps - 3x20"
+            "Flexão fechada isométrica - 3x20",
+            "Circuito de tríceps - 3x20"
         ],
         "Ganho de Massa Muscular": [
-            "TrÃ­ceps pulley pesado - 5x6",
-            "TrÃ­ceps francÃªs com peso - 4x8",
-            "TrÃ­ceps corda pesado - 4x8",
+            "Tríceps pulley pesado - 5x6",
+            "Tríceps francês com peso - 4x8",
+            "Tríceps corda pesado - 4x8",
             "Mergulho com peso - 4x6",
             "Supino fechado - 4x8"
         ]
@@ -551,11 +520,11 @@ treinos = {
             "Cadeira extensora leve - 3x20",
             "Step-ups em banco - 3x15"
         ],
-        "ResistÃªncia": [
+        "Resistência": [
             "Agachamento - 4x20",
             "Cadeira extensora leve - 3x20",
             "Mesa flexora leve - 3x20",
-            "Afundo estÃ¡tico - 4x20",
+            "Afundo estático - 4x20",
             "Polichinelos com agachamento - 3x25"
         ],
         "Ganho de Massa Muscular": [
@@ -563,7 +532,7 @@ treinos = {
             "Leg press pesado - 5x8",
             "Cadeira extensora pesada - 4x8",
             "Mesa flexora pesada - 4x8",
-            "AvanÃ§o com halteres - 4x10"
+            "Avanço com halteres - 4x10"
         ]
     },
     "Costas": {
@@ -576,14 +545,14 @@ treinos = {
         ],
         "Emagrecimento": [
             "Puxada alta leve - 4x15",
-            "Remada com elÃ¡stico - 4x20",
+            "Remada com elástico - 4x20",
             "Remada inversa - 3x20",
-            "Puxada com triÃ¢ngulo - 3x15",
+            "Puxada com triângulo - 3x15",
             "Burpee com remada - 4x30s"
         ],
-        "ResistÃªncia": [
+        "Resistência": [
             "Remada leve - 4x20",
-            "Puxada aberta contÃ­nua - 3x25",
+            "Puxada aberta contínua - 3x25",
             "Remada serrote leve - 3x20",
             "Remada no banco - 4x20",
             "Puxada com isometria - 3x30s"
@@ -596,92 +565,92 @@ treinos = {
             "Levantamento terra pesado - 4x6"
         ]
     },
-    "GlÃºteos": {
+    "Glúteos": {
         "Hipertrofia": [
-            "ElevaÃ§Ã£o de quadril com barra - 4x10",
-            "Agachamento sumÃ´ - 4x10",
-            "AvanÃ§o com peso - 4x10",
+            "Elevação de quadril com barra - 4x10",
+            "Agachamento sumô - 4x10",
+            "Avanço com peso - 4x10",
             "Cadeira abdutora - 3x12",
-            "ExtensÃ£o de quadril na polia - 3x15"
+            "Extensão de quadril na polia - 3x15"
         ],
         "Emagrecimento": [
             "Glute bridge com peso corporal - 4x20",
             "Agachamento lateral - 4x15",
-            "ElevaÃ§Ã£o de quadril unilateral - 3x15",
+            "Elevação de quadril unilateral - 3x15",
             "Afundo alternado - 3x20",
             "Step up - 3x15"
         ],
-        "ResistÃªncia": [
-            "Ponte de glÃºteo - 4x20",
+        "Resistência": [
+            "Ponte de glúteo - 4x20",
             "Agachamento com isometria - 3x30s",
-            "ExtensÃ£o com elÃ¡stico - 3x25",
+            "Extensão com elástico - 3x25",
             "Cadeira abdutora leve - 3x20",
             "Afundo com pausa - 3x20"
         ],
         "Ganho de Massa Muscular": [
             "Hip thrust pesado - 5x6",
-            "AvanÃ§o com barra - 4x8",
-            "ExtensÃ£o de quadril com carga - 4x8",
+            "Avanço com barra - 4x8",
+            "Extensão de quadril com carga - 4x8",
             "Cadeira abdutora pesada - 4x10",
-            "Agachamento sumÃ´ com peso - 4x8"
+            "Agachamento sumô com peso - 4x8"
         ]
     }
 }
 
 def gerar_treino(grupo, objetivo):
-    return treinos.get(grupo, {}).get(objetivo, ["Nenhum treino disponÃ­vel para essa combinaÃ§Ã£o."])
+    return treinos.get(grupo, {}).get(objetivo, ["Nenhum treino disponível para essa combinação."])
 
 
 # ------------------ Dietas Semanais por Objetivo ------------------
 dietas_semanais = {
     "Emagrecimento": {
-        "Segunda": [("CafÃ© da manhÃ£", "1 ovo, pÃ£o integral, cafÃ©", 250),
-                    ("AlmoÃ§o", "Frango, arroz integral, salada", 400),
+        "Segunda": [("Café da manhã", "1 ovo, pão integral, café", 250),
+                    ("Almoço", "Frango, arroz integral, salada", 400),
                     ("Jantar", "Sopa de legumes", 300)],
-        "TerÃ§a": [("CafÃ© da manhÃ£", "Iogurte com aveia", 220),
-                  ("AlmoÃ§o", "Peixe, batata doce, salada", 370),
+        "Terça": [("Café da manhã", "Iogurte com aveia", 220),
+                  ("Almoço", "Peixe, batata doce, salada", 370),
                   ("Jantar", "Omelete com legumes", 280)],
-        "Quarta": [("CafÃ© da manhÃ£", "Smoothie de frutas", 250),
-                   ("AlmoÃ§o", "Tofu, quinoa, legumes", 360),
-                   ("Jantar", "Salada com grÃ£o-de-bico", 290)],
-        "Quinta": [("CafÃ© da manhÃ£", "2 ovos, chÃ¡ verde", 200),
-                   ("AlmoÃ§o", "Frango, arroz integral, brÃ³colis", 380),
+        "Quarta": [("Café da manhã", "Smoothie de frutas", 250),
+                   ("Almoço", "Tofu, quinoa, legumes", 360),
+                   ("Jantar", "Salada com grão-de-bico", 290)],
+        "Quinta": [("Café da manhã", "2 ovos, chá verde", 200),
+                   ("Almoço", "Frango, arroz integral, brócolis", 380),
                    ("Jantar", "Caldo de frango", 300)],
-        "Sexta": [("CafÃ© da manhÃ£", "Panqueca de aveia", 230),
-                  ("AlmoÃ§o", "Frango, abÃ³bora, couve", 360),
+        "Sexta": [("Café da manhã", "Panqueca de aveia", 230),
+                  ("Almoço", "Frango, abóbora, couve", 360),
                   ("Jantar", "Iogurte com chia", 280)]
     },
     "Hipertrofia": {
-        "Segunda": [("CafÃ© da manhÃ£", "3 ovos, pÃ£o, banana", 450),
-                    ("AlmoÃ§o", "Carne vermelha, arroz, legumes", 600),
-                    ("Jantar", "Frango, macarrÃ£o, salada", 500)],
-        "TerÃ§a": [("CafÃ© da manhÃ£", "Omelete com espinafre", 480),
-                  ("AlmoÃ§o", "Peixe, batata doce, salada", 600),
-                  ("Jantar", "Tofu com abÃ³bora", 500)],
-        "Quarta": [("CafÃ© da manhÃ£", "Shake de whey com aveia", 450),
-                   ("AlmoÃ§o", "Frango, arroz, feijÃ£o, vegetais", 650),
+        "Segunda": [("Café da manhã", "3 ovos, pão, banana", 450),
+                    ("Almoço", "Carne vermelha, arroz, legumes", 600),
+                    ("Jantar", "Frango, macarrão, salada", 500)],
+        "Terça": [("Café da manhã", "Omelete com espinafre", 480),
+                  ("Almoço", "Peixe, batata doce, salada", 600),
+                  ("Jantar", "Tofu com abóbora", 500)],
+        "Quarta": [("Café da manhã", "Shake de whey com aveia", 450),
+                   ("Almoço", "Frango, arroz, feijão, vegetais", 650),
                    ("Jantar", "Omelete com batata doce", 520)],
-        "Quinta": [("CafÃ© da manhÃ£", "Smoothie de proteÃ­na vegetal", 430),
-                   ("AlmoÃ§o", "Carne moÃ­da, purÃª de batata", 630),
+        "Quinta": [("Café da manhã", "Smoothie de proteína vegetal", 430),
+                   ("Almoço", "Carne moída, purê de batata", 630),
                    ("Jantar", "Frango com legumes", 500)],
-        "Sexta": [("CafÃ© da manhÃ£", "PÃ£o integral com ovo", 420),
-                  ("AlmoÃ§o", "Frango, arroz, lentilha", 640),
+        "Sexta": [("Café da manhã", "Pão integral com ovo", 420),
+                  ("Almoço", "Frango, arroz, lentilha", 640),
                   ("Jantar", "Ovos com batata", 510)]
     }
 }
 dietas_semanais["Ganho de Massa Muscular"] = dietas_semanais["Hipertrofia"]
-dietas_semanais["ManutenÃ§Ã£o"] = dietas_semanais["Emagrecimento"]
+dietas_semanais["Manutenção"] = dietas_semanais["Emagrecimento"]
 
 # ------------------ Suplementos e Receitas ------------------
 def dicas_suplementos(objetivo):
     if objetivo == "Emagrecimento":
-        return ["CafeÃ­na", "L-Carnitina", "ChÃ¡ verde"]
+        return ["Cafeína", "L-Carnitina", "Chá verde"]
     elif objetivo == "Hipertrofia":
         return ["Whey", "Creatina", "BCAA"]
     elif objetivo == "Ganho de Massa Muscular":
-        return ["Whey", "Creatina", "BCAA", "HipercalÃ³rico"]
+        return ["Whey", "Creatina", "BCAA", "Hipercalórico"]
     else:
-        return ["MultivitamÃ­nico", "Ãmega 3"]
+        return ["Multivitamínico", "Ômega 3"]
 
 def receitas_fitness():
     return [
@@ -695,11 +664,11 @@ def receitas_fitness():
 # ------------------ Interface Principal ------------------
 st.header("Plano de Treino e Dieta Zeus")
 
-aba = st.selectbox("Escolha uma seÃ§Ã£o", ["Treino", "Dieta da Semana", "Suplementos e Receitas", "Gerar PDF"])
+aba = st.selectbox("Escolha uma seção", ["Treino", "Dieta da Semana", "Suplementos e Receitas", "Gerar PDF"])
 
 if aba == "Treino":
     grupo = st.selectbox("Grupo muscular", list(treinos.keys()))
-    objetivo = st.selectbox("Objetivo do treino", ["Hipertrofia", "Emagrecimento", "ResistÃªncia", "Ganho de Massa Muscular"])
+    objetivo = st.selectbox("Objetivo do treino", ["Hipertrofia", "Emagrecimento", "Resistência", "Ganho de Massa Muscular"])
     if st.button("Gerar treino"):
         treino = gerar_treino(grupo, objetivo)
         st.subheader("Treino Sugerido:")
