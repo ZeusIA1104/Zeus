@@ -1,195 +1,217 @@
 import streamlit as st
 import sqlite3
 import hashlib
-from datetime import date
-from fpdf import FPDF
-import plotly.graph_objects as go
+from datetime import datetime
 import requests
+import json
 
-# ------------------ Funções de Pagamento ------------------
-def gerar_link_pagamento():
-    url = "https://api.mercadopago.com/checkout/preferences"
+# ---------- CONFIGS ----------
+ACCESS_TOKEN = "APP_USR-507730409898756-041401-cfb0d18f342ea0b8ada862a23497b9ca-1026722362"
+ADMIN_USERNAME = "guilhermeadm6"
+ADMIN_EMAIL = "guibarcellosdaniel6@gmail.com"
+
+# ---------- BANCO DE DADOS ----------
+def connect_db():
+    conn = sqlite3.connect("zeus_usuarios.db")
+    c = conn.cursor()
+    return conn, c
+
+def create_usertable():
+    conn, c = connect_db()
+    c.execute('''CREATE TABLE IF NOT EXISTS users(
+                username TEXT, email TEXT, password TEXT,
+                payment_status TEXT DEFAULT "pendente", payment_link TEXT)''')
+    conn.commit()
+    conn.close()
+
+def add_userdata(username, email, password, payment_link):
+    conn, c = connect_db()
+    c.execute('INSERT INTO users(username, email, password, payment_status, payment_link) VALUES (?, ?, ?, ?, ?)',
+              (username, email, password, "pendente", payment_link))
+    conn.commit()
+    conn.close()
+
+def login_user(username, password):
+    conn, c = connect_db()
+    c.execute('SELECT * FROM users WHERE username = ? AND password = ?', (username, password))
+    data = c.fetchone()
+    conn.close()
+    return data
+
+def get_payment_status(username):
+    conn, c = connect_db()
+    c.execute('SELECT payment_status FROM users WHERE username = ?', (username,))
+    status = c.fetchone()
+    conn.close()
+    return status[0] if status else None
+
+def update_payment_status(username, status):
+    conn, c = connect_db()
+    c.execute('UPDATE users SET payment_status = ? WHERE username = ?', (status, username))
+    conn.commit()
+    conn.close()
+
+def get_payment_link(username):
+    conn, c = connect_db()
+    c.execute('SELECT payment_link FROM users WHERE username = ?', (username,))
+    link = c.fetchone()
+    conn.close()
+    return link[0] if link else None
+
+# ---------- SEGURANÇA ----------
+def make_hashes(password):
+    return hashlib.sha256(str.encode(password)).hexdigest()
+
+def check_hashes(password, hashed_text):
+    return make_hashes(password) == hashed_text
+
+# ---------- MERCADO PAGO ----------
+def gerar_link_pagamento(username):
     headers = {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer APP_USR-507730409898756-041401-cfb0d18f342ea0b8ada862a23497b9ca-1026722362"
+        "Authorization": f"Bearer {ACCESS_TOKEN}",
+        "Content-Type": "application/json"
     }
-    payload = {
+    body = {
         "items": [{
-            "title": "Acesso Zeus - Mensal",
+            "title": "Acesso Zeus Mensal",
             "quantity": 1,
             "currency_id": "BRL",
             "unit_price": 49.90
         }],
-        "back_urls": {
-            "success": "https://zeusinteligente.streamlit.app",
-            "failure": "https://zeusinteligente.streamlit.app",
-            "pending": "https://zeusinteligente.streamlit.app"
-        },
-        "auto_return": "approved"
+        "payer": {
+            "name": username
+        }
     }
-
-    response = requests.post(url, json=payload, headers=headers)
+    response = requests.post("https://api.mercadopago.com/checkout/preferences", headers=headers, data=json.dumps(body))
     if response.status_code == 201:
         return response.json()["init_point"]
-    else:
-        return None
+    return None
+def tela_login():
+    st.title("ZEUS - Seu Personal Digital")
 
-# ------------------ Banco de dados ------------------
-def criar_banco():
-    conn = sqlite3.connect("zeus_usuarios.db")
-    cursor = conn.cursor()
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS usuarios (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nome TEXT NOT NULL,
-        email TEXT UNIQUE NOT NULL,
-        senha TEXT NOT NULL,
-        genero TEXT,
-        peso REAL,
-        altura REAL,
-        objetivo TEXT,
-        pagamento_confirmado INTEGER DEFAULT 0
-    )
-    """)
-    conn.commit()
-    conn.close()
+    menu = ["Login", "Cadastro"]
+    escolha = st.sidebar.selectbox("Menu", menu)
 
-# ------------------ Funções auxiliares ------------------
-def hash_senha(senha):
-    return hashlib.sha256(senha.encode()).hexdigest()
+    if escolha == "Login":
+        st.subheader("Entrar na sua conta")
 
-def verificar_login(email, senha):
-    conn = sqlite3.connect("zeus_usuarios.db")
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM usuarios WHERE email=? AND senha=?", (email, hash_senha(senha)))
-    user = cursor.fetchone()
-    conn.close()
-    return user
-
-def verificar_pagamento(email):
-    if email == "guibarcellosdaniel6@gmail.com":
-        return True
-    conn = sqlite3.connect("zeus_usuarios.db")
-    cursor = conn.cursor()
-    cursor.execute("SELECT pagamento_confirmado FROM usuarios WHERE email=?", (email,))
-    resultado = cursor.fetchone()
-    conn.close()
-    return resultado and resultado[0] == 1
-
-def calcular_imc(peso, altura):
-    return round(peso / (altura ** 2), 2)
-
-def classificar_imc(imc):
-    if imc < 18.5:
-        return "Abaixo do peso"
-    elif imc < 25:
-        return "Peso normal"
-    elif imc < 30:
-        return "Sobrepeso"
-    elif imc < 35:
-        return "Obesidade Grau I"
-    elif imc < 40:
-        return "Obesidade Grau II"
-    else:
-        return "Obesidade Grau III"
-
-def grafico_imc(usuario_id, altura):
-    conn = sqlite3.connect("zeus_usuarios.db")
-    cursor = conn.cursor()
-    cursor.execute("SELECT data, peso FROM progresso WHERE usuario_id=? ORDER BY data", (usuario_id,))
-    registros = cursor.fetchall()
-    conn.close()
-    if registros:
-        datas = [r[0] for r in registros]
-        pesos = [r[1] for r in registros]
-        imcs = [round(p / (altura ** 2), 2) for p in pesos]
-        fig = go.Figure(data=go.Scatter(x=datas, y=imcs, mode='lines+markers'))
-        fig.update_layout(title="Evolução do IMC", xaxis_title="Data", yaxis_title="IMC")
-        st.plotly_chart(fig)
-    else:
-        st.info("Nenhum dado de progresso registrado ainda.")
-
-# ------------------ Início da Aplicação ------------------
-st.set_page_config(page_title="Zeus - Acesso Seguro", layout="centered")
-criar_banco()
-st.title("Zeus - Login e Cadastro")
-
-if "usuario" not in st.session_state:
-    menu = st.selectbox("Menu", ["Login", "Cadastrar"])
-    email = st.text_input("Email")
-    senha = st.text_input("Senha", type="password")
-
-    if menu == "Cadastrar":
-        nome = st.text_input("Nome completo")
-        genero = st.selectbox("Gênero", ["Masculino", "Feminino", "Outro"])
-        peso = st.number_input("Peso (kg)", 30.0, 200.0)
-        altura = st.number_input("Altura (m)", 1.0, 2.5)
-        objetivo = st.selectbox("Objetivo", ["Hipertrofia", "Emagrecimento", "Manutenção", "Ganho de Massa Muscular"])
-        if st.button("Cadastrar"):
-            try:
-                conn = sqlite3.connect("zeus_usuarios.db")
-                cursor = conn.cursor()
-                cursor.execute("INSERT INTO usuarios (nome, email, senha, genero, peso, altura, objetivo) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                               (nome, email, hash_senha(senha), genero, peso, altura, objetivo))
-                conn.commit()
-                conn.close()
-                st.success("Cadastro realizado com sucesso! Realize o pagamento para ativar.")
-                link_pagamento = gerar_link_pagamento()
-                if link_pagamento:
-                    st.markdown(f"[Clique aqui para pagar R$49,90 e ativar o acesso]({link_pagamento})", unsafe_allow_html=True)
-            except:
-                st.error("Erro ao cadastrar. Email pode já estar em uso.")
-
-    elif menu == "Login":
-        if st.button("Entrar"):
-            user = verificar_login(email, senha)
-            if user:
-                st.session_state["usuario"] = user
+        username = st.text_input("Usuário")
+        password = st.text_input("Senha", type='password')
+        if st.button("Login"):
+            hashed_pswd = make_hashes(password)
+            resultado = login_user(username, hashed_pswd)
+            if resultado:
+                st.success(f"Bem-vindo, {username}!")
+                st.session_state['username'] = username
+                st.session_state['logado'] = True
             else:
-                st.error("Email ou senha incorretos.")
+                st.error("Usuário/senha incorretos")
 
-# ------------------ Painel Principal com Verificação ------------------
-if "usuario" in st.session_state:
-    user = st.session_state["usuario"]
-    st.subheader(f"Bem-vindo, {user[1]}!")
+    elif escolha == "Cadastro":
+        st.subheader("Criar nova conta")
+        new_user = st.text_input("Novo usuário")
+        new_email = st.text_input("Email")
+        new_password = st.text_input("Senha", type='password')
 
-    if not verificar_pagamento(user[2]):
-        st.warning("Acesso restrito: pagamento não confirmado.")
-        link_pagamento = gerar_link_pagamento()
-        if link_pagamento:
-            st.markdown(f"[Clique aqui para pagar R$49,90 e ativar o acesso]({link_pagamento})", unsafe_allow_html=True)
-        st.stop()
+        if st.button("Cadastrar"):
+            hashed_new_password = make_hashes(new_password)
+            link_pagamento = gerar_link_pagamento(new_user)
+            if link_pagamento:
+                add_userdata(new_user, new_email, hashed_new_password, link_pagamento)
+                st.success("Conta criada com sucesso!")
+                st.info("Faça login para continuar")
+            else:
+                st.error("Erro ao gerar link de pagamento")
 
-    st.success("Acesso liberado!")
-    st.write("Aqui entrará o conteúdo completo do Zeus: treinos, dietas, PDF, etc.")
+# Verificação de pagamento do usuário
+def verificar_pagamento(username):
+    if username == ADMIN_USERNAME:
+        return True
 
-# ------------------ Painel do Usuário ------------------
-if "usuario" in st.session_state:
-    user = st.session_state["usuario"]
-    st.markdown(f"## Painel de Controle - {user[1]}")
+    headers = {"Authorization": f"Bearer {ACCESS_TOKEN}"}
+    pagamentos = requests.get("https://api.mercadopago.com/v1/payments/search?sort=date_created&criteria=desc&external_reference=",
+                              headers=headers)
 
-    col1, col2 = st.columns(2)
-    with col1:
-        st.metric("Peso Atual", f"{user[5]} kg")
-    with col2:
-        imc = calcular_imc(user[5], user[6])
-        st.metric("IMC", imc, classificar_imc(imc))
+    if pagamentos.status_code == 200:
+        resultados = pagamentos.json().get("results", [])
+        for item in resultados:
+            nome = item.get("payer", {}).get("name", "").lower()
+            status = item.get("status")
+            if nome == username.lower() and status == "approved":
+                update_payment_status(username, "aprovado")
+                return True
+    return False
 
-    st.markdown("### Evolução do IMC")
-    grafico_imc(user[0], user[6])
+# Tela de aguardo de pagamento
+def tela_pagamento(username):
+    st.warning("Pagamento ainda não confirmado.")
+    link = get_payment_link(username)
+    if link:
+        st.markdown(f"[Clique aqui para pagar R$49,90 e liberar o acesso]({link})", unsafe_allow_html=True)
+    if st.button("Verificar pagamento"):
+        if verificar_pagamento(username):
+            st.success("Pagamento confirmado! Recarregue a página.")
+            st.rerun()
+        else:
+            st.error("Pagamento ainda não identificado.")
+def tela_principal(username):
+    st.title("ZEUS - Personal Trainer Virtual")
 
-    st.markdown("### Registrar Progresso Diário")
-    novo_peso = st.number_input("Peso de hoje (kg)", 30.0, 200.0, step=0.1)
-    calorias = st.number_input("Calorias consumidas hoje", 0, 8000)
-    treino = st.text_input("Treino realizado")
-    if st.button("Salvar progresso"):
-        conn = sqlite3.connect("zeus_usuarios.db")
-        cursor = conn.cursor()
-        cursor.execute("INSERT INTO progresso (usuario_id, data, peso, calorias_consumidas, treino_realizado) VALUES (?, ?, ?, ?, ?)",
-                       (user[0], str(date.today()), novo_peso, calorias, treino))
-        conn.commit()
-        conn.close()
-        st.success("Progresso registrado com sucesso!")
+    st.sidebar.subheader("Navegação")
+    opcoes = ["Treinos", "Dietas", "Suplementos", "Receitas", "Gerar PDF"]
+    escolha = st.sidebar.radio("Escolha uma opção", opcoes)
+
+    if escolha == "Treinos":
+        st.header("Treinos por Grupo Muscular e Objetivo")
+        grupo = st.selectbox("Selecione o grupo muscular", ["Peito", "Costas", "Pernas", "Ombro", "Bíceps", "Tríceps", "Glúteos"])
+        objetivo = st.selectbox("Objetivo", ["Hipertrofia", "Definição", "Resistência"])
+        
+        # Aqui você pode adicionar mais treinos personalizados por grupo e objetivo
+        st.markdown(f"*Treino para {grupo} com foco em {objetivo}:*")
+        st.write("- Exercício 1\n- Exercício 2\n- Exercício 3\n- Exercício 4\n- Exercício 5")
+
+    elif escolha == "Dietas":
+        st.header("Dietas Semanais Personalizadas")
+        objetivo_dieta = st.selectbox("Objetivo da dieta", ["Emagrecimento", "Hipertrofia", "Manutenção"])
+        dia = st.selectbox("Dia da semana", ["Segunda", "Terça", "Quarta", "Quinta", "Sexta"])
+
+        # Aqui você pode fazer um dicionário com variações por dia e objetivo
+        st.markdown(f"*Dieta de {objetivo_dieta} para {dia}:*")
+        st.write("- Café da manhã: ...\n- Almoço: ...\n- Lanche: ...\n- Jantar: ...")
+
+    elif escolha == "Suplementos":
+        st.header("Sugestões de Suplementos")
+        st.write("- Whey Protein\n- Creatina\n- Cafeína\n- Multivitamínico")
+
+    elif escolha == "Receitas":
+        st.header("Receitas Fitness")
+        st.write("- Panqueca de banana\n- Frango grelhado com legumes\n- Shake de proteína com aveia")
+
+    elif escolha == "Gerar PDF":
+        st.header("PDF com Treino e Dieta")
+        st.write("Aqui você poderá gerar o PDF com seus planos. (função ainda em construção)")
+# ---------- INICIAR APP ----------
+def main():
+    st.set_page_config(page_title="Zeus", layout="centered")
+    create_usertable()
+
+    if 'logado' not in st.session_state:
+        st.session_state['logado'] = False
+
+    if st.session_state['logado']:
+        username = st.session_state['username']
+        status_pagamento = get_payment_status(username)
+
+        if username == ADMIN_USERNAME or status_pagamento == "aprovado":
+            tela_principal(username)
+        else:
+            tela_pagamento(username)
+
+    else:
+        tela_login()
+
+if _name_ == '_main_':
+    main()
 
 
 treinos = {
