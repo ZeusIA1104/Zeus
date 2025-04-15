@@ -210,3 +210,68 @@ dietas = {
         "Sexta": ["CafÃ©: ovos mexidos + pÃ£o integral", "AlmoÃ§o: arroz + carne + legumes cozidos", "Lanche: frutas + mel", "Jantar: omelete + salada"]
     }
 }
+
+
+# ---------- TELA PRINCIPAL ESTILIZADA COM PDF ----------
+def tela_principal(username):
+    st.markdown("<h1 style='color:#00BFFF;'>ZEUS - Seu Personal Trainer Virtual</h1>", unsafe_allow_html=True)
+
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        st.image("https://cdn-icons-png.flaticon.com/512/2345/2345337.png", width=100)
+    with col2:
+        st.markdown("<h3 style='color:#00BFFF;'>Bem-vindo ao seu painel de treinos e dietas</h3>", unsafe_allow_html=True)
+
+    menu = ["IMC", "Treinos", "Dietas", "Suplementos", "Receitas", "Gerar PDF"]
+    escolha = st.sidebar.radio("Menu", menu)
+
+    if escolha == "IMC":
+        st.subheader("Calcular IMC")
+        peso = st.number_input("Digite seu peso (kg):", 0.0, 500.0, step=0.1)
+        altura = st.number_input("Digite sua altura (cm):", 0.0, 250.0, step=0.1)
+        if st.button("Calcular IMC"):
+            imc, status = calcular_imc(peso, altura)
+            st.success(f"Seu IMC Ã© {imc} ({status})")
+
+    elif escolha == "Treinos":
+        st.header("Treinos por Grupo Muscular e Objetivo")
+        grupo = st.selectbox("Grupo muscular", list(treinos.keys()))
+        objetivo = st.selectbox("Objetivo", list(treinos[grupo].keys()))
+        st.markdown(f"<b>Treino para {grupo} - {objetivo}:</b>", unsafe_allow_html=True)
+        treino_selecionado = "\n".join(treinos[grupo][objetivo])
+        for ex in treinos[grupo][objetivo]:
+            st.write(f"- {ex}")
+        st.session_state['treino_pdf'] = treino_selecionado
+
+    elif escolha == "Dietas":
+        st.header("Dietas Semanais Personalizadas")
+        objetivo_dieta = st.selectbox("Objetivo da dieta", list(dietas.keys()))
+        dia = st.selectbox("Dia da semana", list(dietas[objetivo_dieta].keys()))
+        st.markdown(f"<b>Dieta de {objetivo_dieta} para {dia}:</b>", unsafe_allow_html=True)
+        dieta_selecionada = "\n".join(dietas[objetivo_dieta][dia])
+        for item in dietas[objetivo_dieta][dia]:
+            st.write(f"- {item}")
+        st.session_state['dieta_pdf'] = dieta_selecionada
+
+    elif escolha == "Suplementos":
+        st.header("SugestÃµes de Suplementos")
+        st.write("- Whey Protein
+- Creatina
+- CafeÃ­na
+- MultivitamÃ­nico")
+
+    elif escolha == "Receitas":
+        st.header("Receitas Fitness")
+        st.write("- Panqueca de aveia
+- Frango grelhado com legumes
+- Shake proteico com banana")
+
+    elif escolha == "Gerar PDF":
+        st.subheader("Gerar PDF com plano atual")
+        if 'treino_pdf' in st.session_state and 'dieta_pdf' in st.session_state:
+            if st.button("Gerar PDF"):
+                pdf_path = gerar_pdf(st.session_state['treino_pdf'], st.session_state['dieta_pdf'])
+                st.success("PDF gerado com sucesso!")
+                st.markdown(f"[Clique aqui para baixar o PDF]({pdf_path})", unsafe_allow_html=True)
+        else:
+            st.warning("Selecione um treino e uma dieta antes de gerar o PDF.")
