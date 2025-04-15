@@ -140,17 +140,6 @@ elif menu == "Login":
 
 # ------------------ Painel do Usuário ------------------
 if "usuario" in st.session_state:
-
-# ------------------ Verificação de Pagamento ------------------
-pagamento_confirmado = False
-if user[1].lower() == conta_admin[0] or user[2].lower() == conta_admin[1]:
-    pagamento_confirmado = True
-else:
-    pagamento_confirmado = verificar_pagamento(user[2])
-    if not pagamento_confirmado:
-        st.warning("Seu pagamento ainda não foi confirmado. Por favor, finalize o pagamento para acessar o conteúdo.")
-        st.stop()
-
     user = st.session_state["usuario"]
     st.markdown(f"## Painel de Controle - {user[1]}")
 
