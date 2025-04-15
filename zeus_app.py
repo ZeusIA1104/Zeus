@@ -5,8 +5,6 @@ from datetime import date
 from fpdf import FPDF
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
-
-
 # zeus_app.py com sistema de pagamento integrado
 import streamlit as st
 import sqlite3
