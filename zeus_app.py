@@ -176,7 +176,7 @@ def tela_principal(username):
 
     elif escolha == "Suplementos":
         st.header("SugestÃµes de Suplementos")
-        st.write("- Whey Protein
+        st.write("- Whey Protein)
 - Creatina
 - CafeÃ­na
 - MultivitamÃ­nico")
