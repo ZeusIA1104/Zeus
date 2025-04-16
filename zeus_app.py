@@ -7,11 +7,11 @@ import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 import requests
 
-# ------------------ Configuração ------------------
+# === CONFIG ===
 ACCESS_TOKEN = "APP_USR-507730409898756-041401-cfb0d18f342ea0b8ada862a23497b9ca-1026722362"
 ADMIN_EMAIL = "guibarcellosdaniel6@gmail.com"
 
-# ------------------ Banco de Dados ------------------
+# === BANCO DE DADOS ===
 def criar_banco():
     conn = sqlite3.connect("zeus_usuarios.db")
     cursor = conn.cursor()
@@ -42,7 +42,7 @@ def criar_banco():
     conn.commit()
     conn.close()
 
-# ------------------ Autenticação ------------------
+# === AUTENTICAÇÃO ===
 def hash_senha(senha):
     return hashlib.sha256(senha.encode()).hexdigest()
 
@@ -69,7 +69,7 @@ def buscar_status_pagamento(email):
     conn.close()
     return resultado[0] if resultado else "pendente"
 
-# ------------------ Pagamento ------------------
+# === PAGAMENTO ===
 def gerar_link_pagamento(nome_usuario):
     headers = {
         "Authorization": f"Bearer {ACCESS_TOKEN}",
@@ -94,11 +94,9 @@ def gerar_link_pagamento(nome_usuario):
 def verificar_pagamento(email_usuario):
     if email_usuario == ADMIN_EMAIL:
         return True
-
     headers = {"Authorization": f"Bearer {ACCESS_TOKEN}"}
     url = "https://api.mercadopago.com/v1/payments/search"
     response = requests.get(url, headers=headers)
-
     if response.status_code == 200:
         results = response.json().get("results", [])
         for pagamento in results:
@@ -108,7 +106,7 @@ def verificar_pagamento(email_usuario):
                 atualizar_status_pagamento(email_usuario, "aprovado")
                 return True
     return False
-# ------------------ Funções Auxiliares ------------------
+# === IMC, PROGRESSO E PDF ===
 def calcular_imc(peso, altura):
     return round(peso / (altura ** 2), 2)
 
@@ -153,104 +151,20 @@ def gerar_pdf(titulo, conteudo):
     pdf_path = titulo.replace(" ", "_") + ".pdf"
     pdf.output(pdf_path)
     return pdf_path
-# ------------------ Treinos por grupo muscular e objetivo ------------------
-treinos = {
-    "Peito": {
-        "Hipertrofia": [
-            "Supino reto com barra - 4x10",
-            "Supino inclinado com halteres - 4x10",
-            "Crucifixo reto - 3x12",
-            "Crossover - 3x15",
-            "Peck deck - 3x12"
-        ],
-        "Emagrecimento": [
-            "Flexões - 4x20",
-            "Supino reto leve - 3x20",
-            "Crossover contínuo - 3x20",
-            "Peck deck leve - 3x20",
-            "Flexão com apoio - 4x15"
-        ],
-        "Resistência": [
-            "Flexões inclinadas - 4x25",
-            "Supino reto com isometria - 3x30s",
-            "Crucifixo leve - 3x25",
-            "Flexões declinadas - 3x20",
-            "Crossover alternado - 3x30"
-        ],
-        "Ganho de Massa Muscular": [
-            "Supino reto pesado - 5x5",
-            "Supino inclinado com barra - 4x6",
-            "Crucifixo inclinado com halteres - 4x8",
-            "Crossover com peso - 3x8",
-            "Peck deck pesado - 4x8"
-        ]
-    },
-    "Costas": {
-        "Hipertrofia": [
-            "Remada curvada com barra - 4x10",
-            "Puxada alta na polia - 4x10",
-            "Remada cavalinho - 4x10",
-            "Levantamento terra - 4x8",
-            "Remada unilateral - 4x10"
-        ],
-        "Emagrecimento": [
-            "Remada com elástico - 4x20",
-            "Puxada leve - 3x20",
-            "Remada invertida - 4x15",
-            "Puxada triângulo - 3x20",
-            "Burpee com remada - 3x30s"
-        ],
-        "Resistência": [
-            "Puxada aberta - 4x25",
-            "Remada contínua leve - 4x20",
-            "Remada curvada leve - 3x25",
-            "Remada banco - 3x20",
-            "Remada isométrica - 3x30s"
-        ],
-        "Ganho de Massa Muscular": [
-            "Barra fixa com peso - 5x5",
-            "Remada curvada pesada - 4x6",
-            "Remada unilateral pesada - 4x8",
-            "Puxada fechada com carga - 4x8",
-            "Terra pesado - 4x6"
-        ]
-    }
-    # Você pode continuar adicionando mais grupos como Ombro, Bíceps, Tríceps, Perna, Glúteos etc.
-}
 
-# ------------------ Dietas semanais por objetivo ------------------
-dietas_semanais = {
-    "Emagrecimento": {
-        "Segunda": [("Café da manhã", "Ovo cozido + café sem açúcar", 180), ("Almoço", "Frango grelhado + salada", 400), ("Jantar", "Sopa de legumes", 300)],
-        "Terça": [("Café da manhã", "Iogurte light + chia", 200), ("Almoço", "Peixe + arroz integral + legumes", 450), ("Jantar", "Omelete com tomate", 280)],
-    },
-    "Hipertrofia": {
-        "Segunda": [("Café da manhã", "3 ovos + aveia", 400), ("Almoço", "Carne vermelha + arroz + feijão", 700), ("Jantar", "Macarrão integral + frango", 600)],
-        "Terça": [("Café da manhã", "Shake de whey + banana", 380), ("Almoço", "Frango + batata doce", 650), ("Jantar", "Panqueca proteica", 550)],
-    }
-}
-dietas_semanais["Ganho de Massa Muscular"] = dietas_semanais["Hipertrofia"]
-dietas_semanais["Manutenção"] = dietas_semanais["Emagrecimento"]
+# === INTERFACE PRINCIPAL E LOGIN ===
+st.set_page_config(page_title="Zeus", layout="centered")
+criar_banco()
 
-# ------------------ Suplementos e receitas ------------------
-def dicas_suplementos(objetivo):
-    if objetivo == "Emagrecimento":
-        return ["Cafeína", "L-Carnitina", "Chá verde"]
-    elif objetivo == "Hipertrofia":
-        return ["Whey Protein", "Creatina", "BCAA"]
-    elif objetivo == "Ganho de Massa Muscular":
-        return ["Whey", "Creatina", "Hipercalórico"]
-    else:
-        return ["Multivitamínico", "Ômega 3"]
+if "usuario" not in st.session_state:
+    st.session_state["usuario"] = None
 
-def receitas_fitness():
-    return [
-        "Panqueca de banana com aveia",
-        "Shake de morango com whey",
-        "Omelete com espinafre",
-        "Frango com legumes",
-        "Salada de quinoa"
-    ]
+st.title("ZEUS - Acesso")
+
+menu = st.selectbox("Menu", ["Login", "Cadastrar"])
+email = st.text_input("Email")
+senha = st.text_input("Senha", type="password")
+
 if menu == "Cadastrar":
     nome = st.text_input("Nome completo")
     genero = st.selectbox("Gênero", ["Masculino", "Feminino", "Outro"])
@@ -261,15 +175,13 @@ if menu == "Cadastrar":
         try:
             conn = sqlite3.connect("zeus_usuarios.db")
             cursor = conn.cursor()
-            cursor.execute("""
-                INSERT INTO usuarios (nome, email, senha, genero, peso, altura, objetivo)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            """, (nome, email, hash_senha(senha), genero, peso, altura, objetivo))
+            cursor.execute("INSERT INTO usuarios (nome, email, senha, genero, peso, altura, objetivo) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                           (nome, email, hash_senha(senha), genero, peso, altura, objetivo))
             conn.commit()
             conn.close()
-            st.success("Cadastro realizado com sucesso! Faça login.")
+            st.success("Cadastro realizado com sucesso! Faça login para continuar.")
         except:
-            st.error("Erro: E-mail já cadastrado.")
+            st.error("Erro: E-mail já cadastrado ou dados inválidos.")
 
 elif menu == "Login":
     if st.button("Entrar"):
@@ -278,16 +190,16 @@ elif menu == "Login":
             st.session_state["usuario"] = user
             st.experimental_rerun()
         else:
-            st.error("E-mail ou senha inválidos.")
+            st.error("E-mail ou senha incorretos.")
 
-# BLOQUEIO DE ACESSO AO CONTEÚDO
+# === BLOQUEIO DE ACESSO ===
 if st.session_state["usuario"]:
     user = st.session_state["usuario"]
     email_user = user[2]
     nome_usuario = user[1]
-    
+
     if not verificar_pagamento(email_user):
-        st.warning("Pagamento não confirmado. Faça o pagamento abaixo para liberar o acesso.")
+        st.warning("Pagamento não confirmado. Pague para liberar o acesso.")
         link_pagamento = gerar_link_pagamento(nome_usuario)
         if link_pagamento:
             st.markdown(f"[Clique aqui para pagar R$49,90]({link_pagamento})", unsafe_allow_html=True)
@@ -298,16 +210,14 @@ if st.session_state["usuario"]:
             else:
                 st.error("Pagamento ainda não identificado.")
         st.stop()
-
-    # PAINEL COMPLETO LIBERADO
+    # === PAINEL ZEUS LIBERADO ===
     st.title(f"Bem-vindo ao Zeus, {nome_usuario}!")
-    st.metric("Peso", f"{user[5]} kg")
+    st.metric("Peso Atual", f"{user[5]} kg")
     imc = calcular_imc(user[5], user[6])
     st.metric("IMC", imc, classificar_imc(imc))
-
     grafico_imc(user[0], user[6])
 
-    st.markdown("### Registrar Progresso")
+    st.subheader("Registrar Progresso Diário")
     novo_peso = st.number_input("Peso de hoje (kg)", 30.0, 200.0, step=0.1)
     calorias = st.number_input("Calorias consumidas hoje", 0, 8000)
     treino = st.text_input("Treino realizado")
@@ -320,22 +230,51 @@ if st.session_state["usuario"]:
         conn.close()
         st.success("Progresso registrado com sucesso!")
 
-    st.markdown("---")
+    # === MENU PRINCIPAL DO USUÁRIO ===
     aba = st.selectbox("Escolha uma seção", ["Treino", "Dieta da Semana", "Suplementos e Receitas", "Gerar PDF"])
 
+    # === TREINO ===
     if aba == "Treino":
-        grupo = st.selectbox("Grupo muscular", list(treinos.keys()))
+        grupo = st.selectbox("Grupo muscular", ["Peito", "Costas", "Ombro", "Bíceps", "Tríceps", "Pernas", "Glúteos"])
         objetivo = user[7]
-        treino = treinos.get(grupo, {}).get(objetivo, ["Nenhum treino disponível."])
+        treino = {
+            "Peito": {
+                "Hipertrofia": ["Supino reto - 4x10", "Supino inclinado - 3x12", "Crossover - 3x15"],
+                "Emagrecimento": ["Flexão - 4x20", "Peck Deck - 3x15"],
+                "Resistência": ["Flexão inclinada - 3x25", "Crucifixo leve - 3x20"],
+                "Ganho de Massa Muscular": ["Supino reto pesado - 5x5", "Crucifixo com carga - 4x8"]
+            },
+            "Costas": {
+                "Hipertrofia": ["Puxada frente - 4x10", "Remada curvada - 3x12"],
+                "Emagrecimento": ["Puxada leve - 4x15", "Remada unilateral - 3x20"],
+                "Resistência": ["Remada leve contínua - 4x20", "Puxada com isometria - 3x30s"],
+                "Ganho de Massa Muscular": ["Levantamento terra - 5x5", "Remada cavalinho - 4x8"]
+            }
+        }
+        treino_sugerido = treino.get(grupo, {}).get(objetivo, ["Nenhum treino disponível."])
         st.subheader(f"Treino para {grupo} - Objetivo: {objetivo}")
-        for t in treino:
+        for t in treino_sugerido:
             st.write("-", t)
-        st.session_state["treino"] = treino
+        st.session_state["treino"] = treino_sugerido
 
+    # === DIETA ===
     elif aba == "Dieta da Semana":
         plano = []
-        st.subheader(f"Dieta semanal para objetivo: {user[7]}")
-        dias = dietas_semanais.get(user[7], {})
+        st.subheader(f"Dieta semanal para: {user[7]}")
+        dietas = {
+            "Emagrecimento": {
+                "Segunda": [("Café da manhã", "Ovo + café", 150), ("Almoço", "Frango + salada", 400), ("Jantar", "Sopa de legumes", 300)],
+                "Terça": [("Café da manhã", "Iogurte light", 180), ("Almoço", "Peixe + legumes", 420), ("Jantar", "Omelete", 280)]
+            },
+            "Hipertrofia": {
+                "Segunda": [("Café da manhã", "3 ovos + aveia", 400), ("Almoço", "Carne + arroz", 700), ("Jantar", "Macarrão + frango", 600)],
+                "Terça": [("Café da manhã", "Whey + banana", 380), ("Almoço", "Frango + batata doce", 650), ("Jantar", "Panqueca", 550)]
+            }
+        }
+        dietas["Ganho de Massa Muscular"] = dietas["Hipertrofia"]
+        dietas["Manutenção"] = dietas["Emagrecimento"]
+
+        dias = dietas.get(user[7], {})
         for dia, refeicoes in dias.items():
             st.markdown(f"*{dia}*")
             for refeicao, descricao, kcal in refeicoes:
@@ -343,7 +282,21 @@ if st.session_state["usuario"]:
                 plano.append(f"{dia} - {refeicao}: {descricao} ({kcal} kcal)")
         st.session_state["dieta"] = plano
 
+    # === SUPLEMENTOS E RECEITAS ===
     elif aba == "Suplementos e Receitas":
+        def dicas_suplementos(objetivo):
+            if objetivo == "Emagrecimento":
+                return ["Cafeína", "L-Carnitina", "Chá verde"]
+            elif objetivo == "Hipertrofia":
+                return ["Whey Protein", "Creatina", "BCAA"]
+            elif objetivo == "Ganho de Massa Muscular":
+                return ["Whey", "Creatina", "Hipercalórico"]
+            else:
+                return ["Multivitamínico", "Ômega 3"]
+
+        def receitas_fitness():
+            return ["Panqueca de banana", "Shake de morango", "Omelete", "Frango com legumes", "Salada de quinoa"]
+
         suplementos = dicas_suplementos(user[7])
         receitas = receitas_fitness()
         st.subheader("Suplementos recomendados:")
@@ -355,6 +308,7 @@ if st.session_state["usuario"]:
         st.session_state["suplementos"] = suplementos
         st.session_state["receitas"] = receitas
 
+    # === GERAR PDF ===
     elif aba == "Gerar PDF":
         st.subheader("Gerar plano completo em PDF")
         treino = st.session_state.get("treino", [])
