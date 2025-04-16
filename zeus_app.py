@@ -510,8 +510,6 @@ def receitas_fitness():
         "Frango com legumes",
         "Salada de quinoa"
     ]
-
-    # === GERAR PDF ===
     elif aba == "Gerar PDF":
     st.subheader("Gerar plano completo em PDF")
     treino = st.session_state.get("treino", [])
