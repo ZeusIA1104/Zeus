@@ -491,31 +491,25 @@ dietas_semanais = {
 dietas_semanais["Ganho de Massa Muscular"] = dietas_semanais["Hipertrofia"]
 dietas_semanais["Manutenção"] = dietas_semanais["Emagrecimento"]
 
-    # === SUPLEMENTOS E RECEITAS ===
-elif aba == "Suplementos e Receitas":
-        def dicas_suplementos(objetivo):
-            if objetivo == "Emagrecimento":
-                return ["Cafeína", "L-Carnitina", "Chá verde"]
-            elif objetivo == "Hipertrofia":
-                return ["Whey Protein", "Creatina", "BCAA"]
-            elif objetivo == "Ganho de Massa Muscular":
-                return ["Whey", "Creatina", "Hipercalórico"]
-            else:
-                return ["Multivitamínico", "Ômega 3"]
+   # ------------------ Suplementos e Receitas ------------------
+def dicas_suplementos(objetivo):
+    if objetivo == "Emagrecimento":
+        return ["Cafeína", "L-Carnitina", "Chá verde"]
+    elif objetivo == "Hipertrofia":
+        return ["Whey", "Creatina", "BCAA"]
+    elif objetivo == "Ganho de Massa Muscular":
+        return ["Whey", "Creatina", "BCAA", "Hipercalórico"]
+    else:
+        return ["Multivitamínico", "Ômega 3"]
 
-        def receitas_fitness():
-            return ["Panqueca de banana", "Shake de morango", "Omelete", "Frango com legumes", "Salada de quinoa"]
-
-        suplementos = dicas_suplementos(user[7])
-        receitas = receitas_fitness()
-        st.subheader("Suplementos recomendados:")
-        for s in suplementos:
-            st.write("-", s)
-        st.subheader("Receitas fitness:")
-        for r in receitas:
-            st.write("-", r)
-        st.session_state["suplementos"] = suplementos
-        st.session_state["receitas"] = receitas
+def receitas_fitness():
+    return [
+        "Panqueca de banana com aveia",
+        "Shake de morango com whey",
+        "Omelete com espinafre",
+        "Frango com legumes",
+        "Salada de quinoa"
+    ]
 
     # === GERAR PDF ===
     elif aba == "Gerar PDF":
