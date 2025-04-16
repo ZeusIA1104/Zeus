@@ -492,7 +492,7 @@ dietas_semanais["Ganho de Massa Muscular"] = dietas_semanais["Hipertrofia"]
 dietas_semanais["Manutenção"] = dietas_semanais["Emagrecimento"]
 
     # === SUPLEMENTOS E RECEITAS ===
-    elif aba == "Suplementos e Receitas":
+elif aba == "Suplementos e Receitas":
         def dicas_suplementos(objetivo):
             if objetivo == "Emagrecimento":
                 return ["Cafeína", "L-Carnitina", "Chá verde"]
