@@ -218,23 +218,17 @@ elif menu == "Login":
             st.error("E-mail ou senha incorretos.")
 
 # === BLOQUEIO DE ACESSO ===
-# BLOQUEIO DE ACESSO E PAGAMENTO
+# === BLOQUEIO DE ACESSO ===
 if "usuario" in st.session_state:
     user = st.session_state["usuario"]
-    if user:
     email_user = user[2]
     nome_usuario = user[1]
 
-    # Verifica se já pagou
     if not verificar_pagamento(email_user):
-        link_pagamento = gerar_link_pagamento(nome_usuario)
         st.warning("Pagamento não confirmado. Pague para liberar o acesso.")
-
+        link_pagamento = gerar_link_pagamento(nome_usuario)
         if link_pagamento:
             st.markdown(f"[Clique aqui para pagar R$49,90]({link_pagamento})", unsafe_allow_html=True)
-        else:
-            st.error("Erro ao gerar link de pagamento. Tente novamente.")
-
         if st.button("Verificar Pagamento"):
             if verificar_pagamento(email_user):
                 st.success("Pagamento confirmado! Recarregue a página.")
