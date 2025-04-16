@@ -214,6 +214,7 @@ if "usuario" in st.session_state and st.session_state["usuario"]:
     aba = st.selectbox("Escolha uma seção", ["Treino", "Dieta da Semana", "Suplementos e Receitas", "Gerar PDF"])
 
     # ------------------ Treinos por grupo muscular e objetivo ------------------
+
 treinos = {
     "Peito": {
         "Hipertrofia": [
@@ -275,8 +276,6 @@ treinos = {
             "Face pull com carga - 4x10"
         ]
     },
-    # (demais grupos continuam na próxima parte para não estourar o limite de caracteres)
-}
     "Bíceps": {
         "Hipertrofia": [
             "Rosca direta com barra - 4x10",
@@ -428,6 +427,9 @@ treinos = {
         ]
     }
 }
+
+def gerar_treino(grupo, objetivo):
+    return treinos.get(grupo, {}).get(objetivo, ["Nenhum treino disponível para essa combinação."])
 # === FUNÇÃO GERAR TREINO ===
 def gerar_treino(grupo, objetivo):
     return treinos.get(grupo, {}).get(objetivo, ["Nenhum treino disponível para essa combinação."])
