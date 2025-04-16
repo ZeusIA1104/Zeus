@@ -221,6 +221,7 @@ elif menu == "Login":
 # BLOQUEIO DE ACESSO E PAGAMENTO
 if "usuario" in st.session_state:
     user = st.session_state["usuario"]
+    if user:
     email_user = user[2]
     nome_usuario = user[1]
 
