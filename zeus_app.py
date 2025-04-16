@@ -218,42 +218,29 @@ elif menu == "Login":
             st.error("E-mail ou senha incorretos.")
 
 # === BLOQUEIO DE ACESSO ===
-if st.session_state["usuario"]:
+# BLOQUEIO DE ACESSO E PAGAMENTO
+if "usuario" in st.session_state:
     user = st.session_state["usuario"]
     email_user = user[2]
     nome_usuario = user[1]
 
+    # Verifica se já pagou
     if not verificar_pagamento(email_user):
-    st.warning("Pagamento não confirmado. Pague para liberar o acesso.")
-    link_pagamento = gerar_link_pagamento(nome_usuario)
-    if link_pagamento:
-        st.markdown(f"[Clique aqui para pagar R$49,90]({link_pagamento})", unsafe_allow_html=True)
-    if st.button("Verificar Pagamento"):
-        if verificar_pagamento(email_user):
-            st.success("Pagamento confirmado! Recarregue a página.")
-            st.experimental_rerun()
-        else:
-            st.error("Pagamento ainda não identificado.")
-    st.stop()
-    # === PAINEL ZEUS LIBERADO ===
-    st.title(f"Bem-vindo ao Zeus, {nome_usuario}!")
-    st.metric("Peso Atual", f"{user[5]} kg")
-    imc = calcular_imc(user[5], user[6])
-    st.metric("IMC", imc, classificar_imc(imc))
-    grafico_imc(user[0], user[6])
+        link_pagamento = gerar_link_pagamento(nome_usuario)
+        st.warning("Pagamento não confirmado. Pague para liberar o acesso.")
 
-    st.subheader("Registrar Progresso Diário")
-    novo_peso = st.number_input("Peso de hoje (kg)", 30.0, 200.0, step=0.1)
-    calorias = st.number_input("Calorias consumidas hoje", 0, 8000)
-    treino = st.text_input("Treino realizado")
-    if st.button("Salvar progresso"):
-        conn = sqlite3.connect("zeus_usuarios.db")
-        cursor = conn.cursor()
-        cursor.execute("INSERT INTO progresso (usuario_id, data, peso, calorias_consumidas, treino_realizado) VALUES (?, ?, ?, ?, ?)",
-                       (user[0], str(date.today()), novo_peso, calorias, treino))
-        conn.commit()
-        conn.close()
-        st.success("Progresso registrado com sucesso!")
+        if link_pagamento:
+            st.markdown(f"[Clique aqui para pagar R$49,90]({link_pagamento})", unsafe_allow_html=True)
+        else:
+            st.error("Erro ao gerar link de pagamento. Tente novamente.")
+
+        if st.button("Verificar Pagamento"):
+            if verificar_pagamento(email_user):
+                st.success("Pagamento confirmado! Recarregue a página.")
+                st.experimental_rerun()
+            else:
+                st.error("Pagamento ainda não identificado.")
+        st.stop()
 
     # === MENU PRINCIPAL DO USUÁRIO ===
     aba = st.selectbox("Escolha uma seção", ["Treino", "Dieta da Semana", "Suplementos e Receitas", "Gerar PDF"])
