@@ -496,8 +496,8 @@ def receitas_fitness():
 # === INTERFACE: ABA "Treino" ===
 aba = st.selectbox("Escolha uma seção", ["Treino", "Dieta da Semana", "Suplementos e Receitas", "Gerar PDF"])
 if aba == "Treino":
+    user = st.session_state["usuario"]  # <- Adicione isso aqui
     grupo = st.selectbox("Grupo muscular", list(treinos.keys()))
-    user = st.session_state["usuario"]
     objetivo_treino = user[7]
     if st.button("Gerar Treino"):
         treino = gerar_treino(grupo, objetivo_treino)
