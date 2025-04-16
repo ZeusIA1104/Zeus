@@ -188,7 +188,7 @@ elif menu == "Login":
     user = verificar_login(email, senha)
     if user:
         st.session_state["usuario"] = user
-        user = st.session_state["usuario"]  # Reatribui pra garantir consistência
+        user = st.session_state["usuario"]
         email_user = user[2]
         nome_usuario = user[1]
 
