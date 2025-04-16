@@ -102,12 +102,11 @@ def verificar_pagamento(email_usuario):
     if response.status_code == 200:
         results = response.json().get("results", [])
         for pagamento in results:
-            payer_info = pagamento.get("payer")
-            if not payer_info:
+            if not pagamento.get("payer"):
                 continue
+            payer_info = pagamento["payer"]
             payer_email = payer_info.get("email", "").lower()
-            status = pagamento.get("status")
-
+            status = pagamento.get("status", "")
             if payer_email == email_usuario.lower() and status == "approved":
                 return True
     return False
@@ -225,18 +224,17 @@ if st.session_state["usuario"]:
     nome_usuario = user[1]
 
     if not verificar_pagamento(email_user):
-        st.warning("Pagamento não confirmado. Pague para liberar o acesso.")
-        link_pagamento = gerar_link_pagamento(nome_usuario)
-        st.write(link_pagamento)
-        if link_pagamento:
-            st.markdown(f"[Clique aqui para pagar R$49,90]({link_pagamento})", unsafe_allow_html=True)
-        if st.button("Verificar Pagamento"):
-            if verificar_pagamento(email_user):
-                st.success("Pagamento confirmado! Recarregue a página.")
-                st.experimental_rerun()
-            else:
-                st.error("Pagamento ainda não identificado.")
-        st.stop()
+    st.warning("Pagamento não confirmado. Pague para liberar o acesso.")
+    link_pagamento = gerar_link_pagamento(nome_usuario)
+    if link_pagamento:
+        st.markdown(f"[Clique aqui para pagar R$49,90]({link_pagamento})", unsafe_allow_html=True)
+    if st.button("Verificar Pagamento"):
+        if verificar_pagamento(email_user):
+            st.success("Pagamento confirmado! Recarregue a página.")
+            st.experimental_rerun()
+        else:
+            st.error("Pagamento ainda não identificado.")
+    st.stop()
     # === PAINEL ZEUS LIBERADO ===
     st.title(f"Bem-vindo ao Zeus, {nome_usuario}!")
     st.metric("Peso Atual", f"{user[5]} kg")
