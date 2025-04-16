@@ -451,30 +451,45 @@ treinos = {
 def gerar_treino(grupo, objetivo):
     return treinos.get(grupo, {}).get(objetivo, ["Nenhum treino disponível para essa combinação."])
 
-    # === DIETA ===
-    elif aba == "Dieta da Semana":
-        plano = []
-        st.subheader(f"Dieta semanal para: {user[7]}")
-        dietas = {
-            "Emagrecimento": {
-                "Segunda": [("Café da manhã", "Ovo + café", 150), ("Almoço", "Frango + salada", 400), ("Jantar", "Sopa de legumes", 300)],
-                "Terça": [("Café da manhã", "Iogurte light", 180), ("Almoço", "Peixe + legumes", 420), ("Jantar", "Omelete", 280)]
-            },
-            "Hipertrofia": {
-                "Segunda": [("Café da manhã", "3 ovos + aveia", 400), ("Almoço", "Carne + arroz", 700), ("Jantar", "Macarrão + frango", 600)],
-                "Terça": [("Café da manhã", "Whey + banana", 380), ("Almoço", "Frango + batata doce", 650), ("Jantar", "Panqueca", 550)]
-            }
-        }
-        dietas["Ganho de Massa Muscular"] = dietas["Hipertrofia"]
-        dietas["Manutenção"] = dietas["Emagrecimento"]
-
-        dias = dietas.get(user[7], {})
-        for dia, refeicoes in dias.items():
-            st.markdown(f"*{dia}*")
-            for refeicao, descricao, kcal in refeicoes:
-                st.write(f"- {refeicao}: {descricao} ({kcal} kcal)")
-                plano.append(f"{dia} - {refeicao}: {descricao} ({kcal} kcal)")
-        st.session_state["dieta"] = plano
+    # ------------------ Dietas Semanais por Objetivo ------------------
+dietas_semanais = {
+    "Emagrecimento": {
+        "Segunda": [("Café da manhã", "1 ovo, pão integral, café", 250),
+                    ("Almoço", "Frango, arroz integral, salada", 400),
+                    ("Jantar", "Sopa de legumes", 300)],
+        "Terça": [("Café da manhã", "Iogurte com aveia", 220),
+                  ("Almoço", "Peixe, batata doce, salada", 370),
+                  ("Jantar", "Omelete com legumes", 280)],
+        "Quarta": [("Café da manhã", "Smoothie de frutas", 250),
+                   ("Almoço", "Tofu, quinoa, legumes", 360),
+                   ("Jantar", "Salada com grão-de-bico", 290)],
+        "Quinta": [("Café da manhã", "2 ovos, chá verde", 200),
+                   ("Almoço", "Frango, arroz integral, brócolis", 380),
+                   ("Jantar", "Caldo de frango", 300)],
+        "Sexta": [("Café da manhã", "Panqueca de aveia", 230),
+                  ("Almoço", "Frango, abóbora, couve", 360),
+                  ("Jantar", "Iogurte com chia", 280)]
+    },
+    "Hipertrofia": {
+        "Segunda": [("Café da manhã", "3 ovos, pão, banana", 450),
+                    ("Almoço", "Carne vermelha, arroz, legumes", 600),
+                    ("Jantar", "Frango, macarrão, salada", 500)],
+        "Terça": [("Café da manhã", "Omelete com espinafre", 480),
+                  ("Almoço", "Peixe, batata doce, salada", 600),
+                  ("Jantar", "Tofu com abóbora", 500)],
+        "Quarta": [("Café da manhã", "Shake de whey com aveia", 450),
+                   ("Almoço", "Frango, arroz, feijão, vegetais", 650),
+                   ("Jantar", "Omelete com batata doce", 520)],
+        "Quinta": [("Café da manhã", "Smoothie de proteína vegetal", 430),
+                   ("Almoço", "Carne moída, purê de batata", 630),
+                   ("Jantar", "Frango com legumes", 500)],
+        "Sexta": [("Café da manhã", "Pão integral com ovo", 420),
+                  ("Almoço", "Frango, arroz, lentilha", 640),
+                  ("Jantar", "Ovos com batata", 510)]
+    }
+}
+dietas_semanais["Ganho de Massa Muscular"] = dietas_semanais["Hipertrofia"]
+dietas_semanais["Manutenção"] = dietas_semanais["Emagrecimento"]
 
     # === SUPLEMENTOS E RECEITAS ===
     elif aba == "Suplementos e Receitas":
