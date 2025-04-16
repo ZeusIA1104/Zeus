@@ -201,6 +201,7 @@ if st.session_state["usuario"]:
     if not verificar_pagamento(email_user):
         st.warning("Pagamento não confirmado. Pague para liberar o acesso.")
         link_pagamento = gerar_link_pagamento(nome_usuario)
+        st.write(link_pagamento)
         if link_pagamento:
             st.markdown(f"[Clique aqui para pagar R$49,90]({link_pagamento})", unsafe_allow_html=True)
         if st.button("Verificar Pagamento"):
