@@ -184,7 +184,7 @@ if menu == "Cadastrar":
             st.error("Erro: E-mail já cadastrado ou dados inválidos.")
 
 elif menu == "Login":
-    if st.button("Entrar"):
+        if st.button("Entrar"):
     user = verificar_login(email, senha)
     if user:
         st.session_state["usuario"] = user
