@@ -102,8 +102,10 @@ def verificar_pagamento(email_usuario):
     if response.status_code == 200:
         results = response.json().get("results", [])
         for pagamento in results:
-            payer_info = pagamento.get("payer", {})
-            payer_email = payer_info.get("email", "").lower()
+            payer_info = pagamento.get("payer")
+if not payer_info:
+    continue  # Pula para o próximo pagamento se não tiver payer
+payer_email = payer_info.get("email", "").lower()
             status = pagamento.get("status")
 
             if payer_email == email_usuario.lower() and status == "approved":
