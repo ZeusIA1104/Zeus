@@ -494,6 +494,7 @@ def receitas_fitness():
         "Salada de quinoa"
     ]
 # === INTERFACE: ABA "Treino" ===
+aba = st.selectbox("Escolha uma seção", ["Treino", "Dieta da Semana", "Suplementos e Receitas", "Gerar PDF"])
 if aba == "Treino":
     grupo = st.selectbox("Grupo muscular", list(treinos.keys()))
     objetivo_treino = user[7]
