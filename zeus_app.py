@@ -216,6 +216,7 @@ elif menu == "Login":
                 st.experimental_rerun()
         else:
             st.error("E-mail ou senha incorretos.")
+
 # === BLOQUEIO DE ACESSO ===
 if "usuario" in st.session_state:
     user = st.session_state["usuario"]
@@ -224,41 +225,22 @@ if "usuario" in st.session_state:
 
     if not verificar_pagamento(email_user):
         st.warning("Pagamento não confirmado. Pague para liberar o acesso.")
+        
+        # Gera o link de pagamento
         link_pagamento = gerar_link_pagamento(nome_usuario)
         
-        if link_pagamento:
-            st.markdown(
-                f'<a href="{link_pagamento}" target="_blank"><button>Pagar R$49,90</button></a>',
-                unsafe_allow_html=True
-            )
-        else:
-            st.error("Erro ao gerar link de pagamento. Tente novamente.")
-
-        if st.button("Verificar Pagamento"):
-            if verificar_pagamento(email_user):
-                st.success("Pagamento confirmado! Recarregue a página.")
-                st.experimental_rerun()
-            else:
-                st.error("Pagamento ainda não identificado. Tente novamente em alguns minutos.")
-        
-        st.stop()  # bloqueia o acesso até o pagamento ser confirmado
-# === BLOQUEIO DE ACESSO ===
-if "usuario" in st.session_state:
-    user = st.session_state["usuario"]
-    email_user = user[2]
-    nome_usuario = user[1]
-
-    if not verificar_pagamento(email_user):
-        st.warning("Pagamento não confirmado. Pague para liberar o acesso.")
-        link_pagamento = gerar_link_pagamento(nome_usuario)
         if link_pagamento:
             st.markdown(f"[Clique aqui para pagar R$49,90]({link_pagamento})", unsafe_allow_html=True)
+        else:
+            st.error("Erro ao gerar o link de pagamento. Tente novamente.")
+
         if st.button("Verificar Pagamento"):
             if verificar_pagamento(email_user):
                 st.success("Pagamento confirmado! Recarregue a página.")
                 st.experimental_rerun()
             else:
                 st.error("Pagamento ainda não identificado.")
+        
         st.stop()
 
     # === MENU PRINCIPAL DO USUÁRIO ===
