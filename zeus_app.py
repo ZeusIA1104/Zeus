@@ -85,19 +85,17 @@ def verificar_pagamento(email_usuario):
         return True
 
     headers = {"Authorization": f"Bearer {ACCESS_TOKEN}"}
-    url = "https://api.mercadopago.com/v1/payments/search"
+    url = "https://api.mercadopago.com/v1/payments/search?sort=date_created&criteria=desc"
     response = requests.get(url, headers=headers)
 
     if response.status_code == 200:
         results = response.json().get("results", [])
         for pagamento in results:
-            if not pagamento.get("payer"):
-                continue
-            payer_info = pagamento["payer"]
-            payer_email = payer_info.get("email", "").lower()
+            payer = pagamento.get("payer", {})
+            payer_email = payer.get("email", "").lower()
             status = pagamento.get("status", "")
             if payer_email == email_usuario.lower() and status == "approved":
-                atualizar_status_pagamento(email_usuario, "aprovado")
+                atualizar_status_pagamento(email_usuario, "aprovado")  # <-- ESSA LINHA É CRUCIAL
                 return True
     return False
 
