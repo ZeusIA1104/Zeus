@@ -513,13 +513,13 @@ def receitas_fitness():
 
     # === GERAR PDF ===
     elif aba == "Gerar PDF":
-        st.subheader("Gerar plano completo em PDF")
-        treino = st.session_state.get("treino", [])
-        dieta = st.session_state.get("dieta", [])
-        suplementos = st.session_state.get("suplementos", [])
-        receitas = st.session_state.get("receitas", [])
-        if st.button("Gerar PDF"):
-            conteudo = ["Plano de Treino:"] + treino + ["", "Plano de Dieta:"] + dieta + ["", "Suplementos:"] + suplementos + ["", "Receitas:"] + receitas
-            pdf_path = gerar_pdf("Plano Zeus", conteudo)
-            with open(pdf_path, "rb") as f:
-                st.download_button("Baixar PDF", f, file_name="Plano_Zeus.pdf")
+    st.subheader("Gerar plano completo em PDF")
+    treino = st.session_state.get("treino", [])
+    dieta = st.session_state.get("dieta", [])
+    suplementos = st.session_state.get("suplementos", [])
+    receitas = st.session_state.get("receitas", [])
+    if st.button("Gerar PDF"):
+        conteudo = ["Plano de Treino:"] + treino + ["", "Plano de Dieta:"] + dieta + ["", "Suplementos:"] + suplementos + ["", "Receitas:"] + receitas
+        pdf_path = gerar_pdf("Plano Zeus", conteudo)
+        with open(pdf_path, "rb") as f:
+            st.download_button("Baixar PDF", f, file_name="Plano_Zeus.pdf")
