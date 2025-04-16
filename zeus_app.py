@@ -277,7 +277,7 @@ treinos = {
     },
     # (demais grupos continuam na próxima parte para não estourar o limite de caracteres)
 }
-    "Bíceps": {
+     "Bíceps": {
         "Hipertrofia": [
             "Rosca direta com barra - 4x10",
             "Rosca martelo com halteres - 4x10",
