@@ -165,31 +165,35 @@ if menu == "Cadastrar":
         except:
             st.error("Erro: E-mail já cadastrado ou dados inválidos.")
 
-if menu == "Login":
+elif menu == "Login":
     if st.button("Entrar"):
         user = verificar_login(email, senha)
         if user:
+            st.session_state["usuario"] = user
+            user = st.session_state["usuario"]
             email_user = user[2]
             nome_usuario = user[1]
-            st.session_state["usuario"] = user
 
+            # VERIFICAÇÃO DE PAGAMENTO
             if not verificar_pagamento(email_user):
                 st.warning("Pagamento não confirmado. Pague para liberar o acesso.")
-                link_pagamento = gerar_link_pagamento(nome_usuario, email_user)
+                link_pagamento = gerar_link_pagamento(nome_usuario)
+
                 if link_pagamento:
                     st.markdown(f"[Clique aqui para pagar R$49,90]({link_pagamento})", unsafe_allow_html=True)
                 else:
-                    st.error("Erro ao gerar o link de pagamento.")
+                    st.error("Erro ao gerar link de pagamento.")
 
+                # BOTÃO DE VERIFICAÇÃO DE PAGAMENTO
                 if st.button("Verificar Pagamento"):
                     if verificar_pagamento(email_user):
+                        atualizar_status_pagamento(email_user, "aprovado")
                         st.success("Pagamento confirmado! Recarregue a página.")
                         st.experimental_rerun()
                     else:
                         st.error("Pagamento ainda não identificado.")
                 st.stop()
             else:
-                st.success("Login e pagamento confirmados.")
                 st.experimental_rerun()
         else:
             st.error("E-mail ou senha incorretos.")
