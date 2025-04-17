@@ -95,7 +95,7 @@ def verificar_pagamento(email_usuario):
             payer_name = pagamento.get("payer", {}).get("first_name", "").lower()
 if payer_name in nome_usuario.lower() and status == "approved":
     return True
-    return True
+                return True
     return False
 
 # === FUNÇÕES DE IMC E PDF ===
@@ -191,7 +191,7 @@ elif menu == "Login":
             else:
                 st.error("Pagamento ainda não identificado. Tente novamente em alguns minutos.")
 
-           except:
+    except:
         st.error("Erro: E-mail já cadastrado ou dados inválidos.")
             st.error("E-mail ou senha incorretos.")
 # === BLOQUEIO DE ACESSO ===
