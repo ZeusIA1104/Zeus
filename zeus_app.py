@@ -145,7 +145,7 @@ if menu == "Cadastrar":
     peso = st.number_input("Peso (kg)", 30.0, 200.0)
     altura = st.number_input("Altura (m)", 1.0, 2.5)
     objetivo = st.selectbox("Objetivo", ["Hipertrofia", "Emagrecimento", "Manutenção", "Ganho de Massa Muscular"])
-    
+
     if st.button("Cadastrar"):
         try:
             conn = sqlite3.connect("zeus_usuarios.db")
@@ -154,16 +154,33 @@ if menu == "Cadastrar":
                            (nome, email, hash_senha(senha), genero, peso, altura, objetivo))
             conn.commit()
             conn.close()
-            
-            # Gera o link de pagamento automaticamente após o cadastro
-            link = gerar_link_pagamento(nome, email)
-            if link:
-                st.markdown(f"Cadastro feito! [Clique aqui para pagar R$49,90 e liberar o acesso]({link})", unsafe_allow_html=True)
+            st.success("Cadastro feito! Clique no link abaixo para pagar e liberar o acesso.")
+
+            # Salva no session_state para permitir verificação depois
+            st.session_state["pagamento_aguardando"] = True
+            st.session_state["usuario_pagamento"] = email
+
+            # Gera link de pagamento
+            link_pagamento = gerar_link_pagamento(nome)
+            if link_pagamento:
+                st.markdown(f"*[Clique aqui para pagar R$49,90 e liberar o acesso]({link_pagamento})*", unsafe_allow_html=True)
             else:
-                st.warning("Cadastro feito, mas não conseguimos gerar o link de pagamento.")
+                st.error("Erro ao gerar link de pagamento.")
+
         except:
             st.error("Erro: E-mail já cadastrado ou dados inválidos.")
 
+# === Botão de verificação de pagamento ===
+if st.session_state.get("pagamento_aguardando"):
+    st.info("Após o pagamento, clique abaixo para verificar:")
+    if st.button("Verificar Pagamento"):
+        email_user = st.session_state.get("usuario_pagamento")
+        if verificar_pagamento(email_user):
+            atualizar_status_pagamento(email_user, "aprovado")
+            st.success("Pagamento confirmado! Agora faça login para acessar o Zeus.")
+            st.session_state["pagamento_aguardando"] = False
+        else:
+            st.error("Pagamento ainda não identificado. Tente novamente em alguns instantes.")
 elif menu == "Login":
     if st.button("Entrar"):
         user = verificar_login(email, senha)
