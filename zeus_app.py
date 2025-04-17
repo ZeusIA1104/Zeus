@@ -92,10 +92,9 @@ def verificar_pagamento(email_usuario):
         results = response.json().get("results", [])
         for pagamento in results:
             payer = pagamento.get("payer", {})
-            payer_email = payer.get("email", "").lower()
-            status = pagamento.get("status", "")
-            if payer_email == email_usuario.lower() and status == "approved":
-                atualizar_status_pagamento(email_usuario, "aprovado")  # <-- ESSA LINHA É CRUCIAL
+            payer_name = pagamento.get("payer", {}).get("first_name", "").lower()
+if payer_name in nome_usuario.lower() and status == "approved":
+    return True
                 return True
     return False
 
