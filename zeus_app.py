@@ -154,19 +154,23 @@ if menu == "Cadastrar":
                            (nome, email, hash_senha(senha), genero, peso, altura, objetivo))
             conn.commit()
             conn.close()
-            st.success("Cadastro feito! Clique no link abaixo para pagar e liberar o acesso.")
 
-            # Salva no session_state para permitir verificação depois
-            st.session_state["pagamento_aguardando"] = True
-            st.session_state["usuario_pagamento"] = email
+            # Link de pagamento após cadastro
+            link = gerar_link_pagamento(nome, email)
+            if link:
+                st.success("Cadastro feito com sucesso!")
+                st.markdown(f"[Clique aqui para pagar R$49,90 e liberar o acesso]({link})", unsafe_allow_html=True)
 
-            # Gera link de pagamento
-            link_pagamento = gerar_link_pagamento(nome)
-            if link_pagamento:
-                st.markdown(f"*[Clique aqui para pagar R$49,90 e liberar o acesso]({link_pagamento})*", unsafe_allow_html=True)
+                # Botão de verificação de pagamento
+                if st.button("Verificar Pagamento"):
+                    if verificar_pagamento(email):  # Verifica pelo email
+                        atualizar_status_pagamento(email, "aprovado")
+                        st.success("Pagamento confirmado! Faça login para acessar o Zeus.")
+                        st.stop()
+                    else:
+                        st.error("Pagamento ainda não identificado. Tente novamente em alguns minutos.")
             else:
-                st.error("Erro ao gerar link de pagamento.")
-
+                st.warning("Cadastro feito, mas não conseguimos gerar o link de pagamento.")
         except:
             st.error("Erro: E-mail já cadastrado ou dados inválidos.")
 
