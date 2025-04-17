@@ -199,18 +199,7 @@ elif menu == "Login":
                     st.markdown(f"[Clique aqui para pagar R$49,90]({link_pagamento})", unsafe_allow_html=True)
                 else:
                     st.error("Erro ao gerar link de pagamento.")
-
-                # === Botão de verificação de pagamento após cadastro ===
-        if st.button("Verificar Pagamento"):
-            if verificar_pagamento(email):
-                atualizar_status_pagamento(email, "aprovado")
-                st.success("Pagamento confirmado! Faça login para acessar o Zeus.")
-            else:
-                st.error("Pagamento ainda não identificado. Tente novamente em alguns minutos.")
-
-    except:
-        st.error("Erro: E-mail já cadastrado ou dados inválidos.")
-            st.error("E-mail ou senha incorretos.")
+        
 # === BLOQUEIO DE ACESSO ===
 if st.session_state["usuario"]:
     user = st.session_state["usuario"]
