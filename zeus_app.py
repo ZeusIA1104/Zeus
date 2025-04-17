@@ -191,7 +191,7 @@ elif menu == "Login":
             else:
                 st.error("Pagamento ainda não identificado. Tente novamente em alguns minutos.")
 
-          except:
+           except:
         st.error("Erro: E-mail já cadastrado ou dados inválidos.")
             st.error("E-mail ou senha incorretos.")
 # === BLOQUEIO DE ACESSO ===
