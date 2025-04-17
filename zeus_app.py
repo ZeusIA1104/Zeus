@@ -95,7 +95,7 @@ def verificar_pagamento(email_usuario):
             payer_name = pagamento.get("payer", {}).get("first_name", "").lower()
 if payer_name in nome_usuario.lower() and status == "approved":
     return True
-                return True
+    return True
     return False
 
 # === FUNÇÕES DE IMC E PDF ===
