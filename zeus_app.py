@@ -30,7 +30,6 @@ def criar_banco():
     """)
     conn.commit()
     conn.close()
-
 # === AUTENTICAÇÃO ===
 def hash_senha(senha):
     return hashlib.sha256(senha.encode()).hexdigest()
@@ -57,6 +56,7 @@ def atualizar_status_pagamento(email, status):
     cursor.execute("UPDATE usuarios SET status_pagamento=? WHERE email=?", (status, email))
     conn.commit()
     conn.close()
+
 # === PAGAMENTO ===
 def gerar_link_pagamento(nome_usuario, email_usuario):
     headers = {
@@ -80,8 +80,8 @@ def gerar_link_pagamento(nome_usuario, email_usuario):
         return response.json()["init_point"]
     return None
 
-def verificar_pagamento(email_usuario):
-    if email_usuario == ADMIN_EMAIL:
+def verificar_pagamento_por_nome(nome_usuario):
+    if nome_usuario.lower() == ADMIN_EMAIL.split("@")[0].lower():
         return True
 
     headers = {"Authorization": f"Bearer {ACCESS_TOKEN}"}
@@ -91,10 +91,9 @@ def verificar_pagamento(email_usuario):
     if response.status_code == 200:
         results = response.json().get("results", [])
         for pagamento in results:
-            payer = pagamento.get("payer", {})
             payer_name = pagamento.get("payer", {}).get("first_name", "").lower()
-if payer_name in nome_usuario.lower() and status == "approved":
-    return True
+            status = pagamento.get("status", "")
+            if payer_name in nome_usuario.lower() and status == "approved":
                 return True
     return False
 
@@ -145,7 +144,7 @@ if menu == "Cadastrar":
     peso = st.number_input("Peso (kg)", 30.0, 200.0)
     altura = st.number_input("Altura (m)", 1.0, 2.5)
     objetivo = st.selectbox("Objetivo", ["Hipertrofia", "Emagrecimento", "Manutenção", "Ganho de Massa Muscular"])
-    
+
     if st.button("Cadastrar"):
         try:
             conn = sqlite3.connect("zeus_usuarios.db")
@@ -154,13 +153,19 @@ if menu == "Cadastrar":
                            (nome, email, hash_senha(senha), genero, peso, altura, objetivo))
             conn.commit()
             conn.close()
-            
-            # Gera o link de pagamento automaticamente após o cadastro
+
             link = gerar_link_pagamento(nome, email)
             if link:
-                st.markdown(f"Cadastro feito! [Clique aqui para pagar R$49,90 e liberar o acesso]({link})", unsafe_allow_html=True)
+                st.success("Cadastro realizado com sucesso!")
+                st.markdown(f"[Clique aqui para pagar R$49,90 e liberar o acesso]({link})", unsafe_allow_html=True)
+                if st.button("Verificar Pagamento"):
+                    if verificar_pagamento_por_nome(nome):
+                        atualizar_status_pagamento(email, "aprovado")
+                        st.success("Pagamento confirmado! Faça login para acessar o Zeus.")
+                    else:
+                        st.warning("Pagamento ainda não identificado. Tente novamente em alguns minutos.")
             else:
-                st.warning("Cadastro feito, mas não conseguimos gerar o link de pagamento.")
+                st.warning("Não foi possível gerar o link de pagamento.")
         except:
             st.error("Erro: E-mail já cadastrado ou dados inválidos.")
 
@@ -168,73 +173,67 @@ elif menu == "Login":
     if st.button("Entrar"):
         user = verificar_login(email, senha)
         if user:
-            st.session_state["usuario"] = user
-            user = st.session_state["usuario"]
-            email_user = user[2]
             nome_usuario = user[1]
-
-            # VERIFICAÇÃO DE PAGAMENTO
-            if not verificar_pagamento(email_user):
-                st.warning("Pagamento não confirmado. Pague para liberar o acesso.")
-                link_pagamento = gerar_link_pagamento(nome_usuario)
-
-                if link_pagamento:
-                    st.markdown(f"[Clique aqui para pagar R$49,90]({link_pagamento})", unsafe_allow_html=True)
-                else:
-                    st.error("Erro ao gerar link de pagamento.")
-
-                # === Botão de verificação de pagamento após cadastro ===
-        if st.button("Verificar Pagamento"):
-            if verificar_pagamento(email):
-                atualizar_status_pagamento(email, "aprovado")
-                st.success("Pagamento confirmado! Faça login para acessar o Zeus.")
+            status_pag = buscar_status_pagamento(email)
+            if status_pag != "aprovado":
+                st.warning("Pagamento não confirmado. Faça o pagamento para continuar.")
+                link = gerar_link_pagamento(nome_usuario, email)
+                if link:
+                    st.markdown(f"[Clique aqui para pagar R$49,90]({link})", unsafe_allow_html=True)
+                if st.button("Verificar Pagamento"):
+                    if verificar_pagamento_por_nome(nome_usuario):
+                        atualizar_status_pagamento(email, "aprovado")
+                        st.success("Pagamento confirmado! Recarregue a página.")
+                        st.experimental_rerun()
+                    else:
+                        st.warning("Pagamento ainda não identificado.")
+                st.stop()
             else:
-                st.error("Pagamento ainda não identificado. Tente novamente em alguns minutos.")
-
-    except:
-        st.error("Erro: E-mail já cadastrado ou dados inválidos.")
-            st.error("E-mail ou senha incorretos.")
-# === BLOQUEIO DE ACESSO ===
+                st.session_state["usuario"] = user
+                st.experimental_rerun()
+        else:
+            st.error("Email ou senha incorretos.")
+# === BLOQUEIO DE ACESSO E MENU PRINCIPAL ===
 if st.session_state["usuario"]:
     user = st.session_state["usuario"]
-    email_user = user[2]
     nome_usuario = user[1]
+    email_user = user[2]
+    objetivo_user = user[7]
+    status_pag = buscar_status_pagamento(email_user)
 
-    if not verificar_pagamento(email_user):
-        st.warning("Pagamento não confirmado. Pague para liberar o acesso.")
-        link_pagamento = gerar_link_pagamento(nome_usuario, email_user)
-        if link_pagamento:
-            st.markdown(f"[Clique aqui para pagar R$49,90]({link_pagamento})", unsafe_allow_html=True)
-        else:
-            st.error("Erro ao gerar o link de pagamento.")
+    if status_pag != "aprovado":
+        st.warning("Pagamento não confirmado. Faça o pagamento para continuar.")
+        link = gerar_link_pagamento(nome_usuario, email_user)
+        if link:
+            st.markdown(f"[Clique aqui para pagar R$49,90]({link})", unsafe_allow_html=True)
         if st.button("Verificar Pagamento"):
-            if verificar_pagamento(email_user):
+            if verificar_pagamento_por_nome(nome_usuario):
+                atualizar_status_pagamento(email_user, "aprovado")
                 st.success("Pagamento confirmado! Recarregue a página.")
                 st.experimental_rerun()
             else:
-                st.error("Pagamento ainda não identificado.")
+                st.warning("Pagamento ainda não identificado.")
         st.stop()
 
-    # === MENU PRINCIPAL DO USUÁRIO ===
+    # === MENU DO ZEUS ===
+    st.subheader(f"Bem-vindo ao Zeus, {nome_usuario.split()[0]}!")
     aba = st.selectbox("Escolha uma seção", ["Treino", "Dieta da Semana", "Suplementos e Receitas", "Gerar PDF"])
 
     # --- Treino ---
     if aba == "Treino":
         grupo = st.selectbox("Grupo muscular", list(treinos.keys()))
-        objetivo_treino = user[7]
         if st.button("Gerar Treino"):
-            treino = gerar_treino(grupo, objetivo_treino)
-            st.subheader(f"Treino para {grupo} - {objetivo_treino}")
+            treino = gerar_treino(grupo, objetivo_user)
+            st.subheader(f"Treino para {grupo} - {objetivo_user}")
             for ex in treino:
                 st.write("- ", ex)
             st.session_state["treino"] = treino
 
     # --- Dieta da Semana ---
     elif aba == "Dieta da Semana":
-        objetivo_dieta = user[7]
         if st.button("Gerar Dieta da Semana"):
-            dieta_dias = dietas_semanais.get(objetivo_dieta, {})
-            st.subheader(f"Dieta semanal para: {objetivo_dieta}")
+            dieta_dias = dietas_semanais.get(objetivo_user, {})
+            st.subheader(f"Dieta semanal para: {objetivo_user}")
             plano_dieta_semana = []
             for dia, refeicoes in dieta_dias.items():
                 st.markdown(f"{dia}")
@@ -245,9 +244,8 @@ if st.session_state["usuario"]:
 
     # --- Suplementos e Receitas ---
     elif aba == "Suplementos e Receitas":
-        objetivo = user[7]
         st.subheader("Suplementos indicados:")
-        for suplemento in dicas_suplementos(objetivo):
+        for suplemento in dicas_suplementos(objetivo_user):
             st.write("- ", suplemento)
         st.subheader("Receitas fitness:")
         for r in receitas_fitness():
