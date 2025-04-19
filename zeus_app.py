@@ -1,10 +1,9 @@
 import streamlit as st
 import sqlite3
 import hashlib
-from datetime import date
 from fpdf import FPDF
 import requests
-import unicodedata 
+import unicodedata
 
 # === CONFIG ===
 ACCESS_TOKEN = "APP_USR-507730409898756-041401-cfb0d18f342ea0b8ada862a23497b9ca-1026722362"
@@ -30,7 +29,6 @@ def criar_banco():
     conn.commit()
     conn.close()
 
-# === AUTENTICAÇÃO ===
 def hash_senha(senha):
     return hashlib.sha256(senha.encode()).hexdigest()
 
@@ -56,7 +54,6 @@ def atualizar_status_pagamento(email, status):
     cursor.execute("UPDATE usuarios SET status_pagamento=? WHERE email=?", (status, email))
     conn.commit()
     conn.close()
-# === PAGAMENTO ===
 def gerar_link_pagamento(nome_usuario, email_usuario):
     headers = {
         "Authorization": f"Bearer {ACCESS_TOKEN}",
@@ -85,12 +82,6 @@ def normalizar_nome(nome):
         if unicodedata.category(c) != 'Mn'
     )
 
-def normalizar_nome(nome):
-    return ''.join(
-        c for c in unicodedata.normalize('NFD', nome.lower())
-        if unicodedata.category(c) != 'Mn'
-    )
-
 def verificar_pagamento_por_nome(nome_usuario):
     headers = {"Authorization": f"Bearer {ACCESS_TOKEN}"}
     url = "https://api.mercadopago.com/v1/payments/search?sort=date_created&criteria=desc"
@@ -108,23 +99,8 @@ def verificar_pagamento_por_nome(nome_usuario):
                     return True
     return False
 
-# === FUNÇÕES DE IMC E PDF ===
 def calcular_imc(peso, altura):
     return round(peso / (altura ** 2), 2)
-
-def classificar_imc(imc):
-    if imc < 18.5:
-        return "Abaixo do peso"
-    elif imc < 25:
-        return "Peso normal"
-    elif imc < 30:
-        return "Sobrepeso"
-    elif imc < 35:
-        return "Obesidade Grau I"
-    elif imc < 40:
-        return "Obesidade Grau II"
-    else:
-        return "Obesidade Grau III"
 
 def gerar_pdf(titulo, conteudo):
     pdf = FPDF()
@@ -138,7 +114,6 @@ def gerar_pdf(titulo, conteudo):
     pdf.output(pdf_path)
     return pdf_path
 
-# === INÍCIO DA INTERFACE ===
 st.set_page_config(page_title="ZEUS", layout="centered")
 criar_banco()
 st.title("ZEUS - Acesso")
@@ -169,15 +144,13 @@ if menu == "Cadastrar":
             if link:
                 st.success("Cadastro realizado com sucesso!")
                 st.markdown(f"[Clique aqui para pagar R$49,90 e liberar o acesso]({link})", unsafe_allow_html=True)
-                st.info("Após o pagamento, clique no botão abaixo:")
+                st.info("Após o pagamento, clique no botão abaixo para verificar.")
                 if st.button("Verificar Pagamento"):
                     if verificar_pagamento_por_nome(nome):
                         atualizar_status_pagamento(email, "aprovado")
                         st.success("Pagamento confirmado! Faça login para acessar o Zeus.")
                     else:
                         st.warning("Pagamento ainda não identificado.")
-            else:
-                st.warning("Não foi possível gerar o link de pagamento.")
         except:
             st.error("Erro: E-mail já cadastrado ou dados inválidos.")
 
@@ -192,11 +165,10 @@ elif menu == "Login":
                 link = gerar_link_pagamento(nome_usuario, email)
                 if link:
                     st.markdown(f"[Clique aqui para pagar R$49,90]({link})", unsafe_allow_html=True)
-                st.info("Após o pagamento, clique no botão abaixo:")
                 if st.button("Verificar Pagamento"):
                     if verificar_pagamento_por_nome(nome_usuario):
                         atualizar_status_pagamento(email, "aprovado")
-                        st.success("Pagamento confirmado! Recarregue a página.")
+                        st.success("Pagamento confirmado! Recarregando...")
                         st.experimental_rerun()
                     else:
                         st.warning("Pagamento ainda não identificado.")
@@ -211,11 +183,9 @@ elif menu == "Login":
 if st.session_state["usuario"]:
     user = st.session_state["usuario"]
     email_user = user[2]
-
-    if email_user == ADMIN_EMAIL:
+    if email_user == ADMIN_EMAIL:"guibarcellosdaniel6@gmail.com"
         st.markdown("---")
         st.subheader("Painel do Administrador - Liberar Acesso Manual")
-
         nome_alvo = st.text_input("Nome do usuário a liberar:")
         if st.button("Liberar acesso manualmente"):
             try:
@@ -224,20 +194,20 @@ if st.session_state["usuario"]:
                 cursor.execute("UPDATE usuarios SET status_pagamento='aprovado' WHERE nome LIKE ?", (f"%{nome_alvo}%",))
                 conn.commit()
                 conn.close()
-                st.success(f"Acesso de '{nome_alvo}' foi liberado com sucesso!")
+                st.success(f"Acesso de '{nome_alvo}' liberado com sucesso!")
             except Exception as e:
                 st.error(f"Erro ao liberar acesso: {e}")
 # === TREINOS POR GRUPO ===
 treinos = {
     "Peito": {
         "Hipertrofia": ["Supino reto", "Supino inclinado", "Crucifixo", "Crossover", "Flexão com carga"],
-        "Emagrecimento": ["Flexão", "Supino com pouco peso", "Pullover leve", "Crucifixo inclinado", "Circuito peitoral"],
+        "Emagrecimento": ["Flexão", "Supino leve", "Pullover leve", "Crossover leve", "Peck deck leve"],
         "Manutenção": ["Supino reto", "Crucifixo", "Peck deck", "Flexão", "Crossover"]
     },
     "Costas": {
-        "Hipertrofia": ["Remada curvada", "Puxada frontal", "Levantamento terra", "Puxada aberta", "Remada baixa"],
+        "Hipertrofia": ["Remada curvada", "Puxada frontal", "Levantamento terra", "Remada baixa", "Puxada fechada"],
         "Emagrecimento": ["Puxada leve", "Remada unilateral", "Pull down", "Crucifixo invertido", "Barra assistida"],
-        "Manutenção": ["Puxada frente", "Remada baixa", "Remada curvada", "Barra fixa", "Puxada fechada"]
+        "Manutenção": ["Remada baixa", "Puxada frente", "Barra fixa", "Remada curvada", "Encolhimento"]
     }
 }
 
@@ -247,16 +217,15 @@ def gerar_treino(grupo, objetivo):
 # === DIETAS SEMANAIS ===
 dietas_semanais = {
     "Hipertrofia": {
-        "Segunda-feira": [("Café da manhã", "Ovos mexidos com aveia", 350), ("Almoço", "Arroz, feijão e frango", 700), ("Jantar", "Batata doce e carne moída", 600)],
-        "Terça-feira": [("Café da manhã", "Pão integral com ovos", 320), ("Almoço", "Macarrão com carne moída", 680), ("Jantar", "Frango grelhado com purê", 550)]
+        "Segunda-feira": [("Café da manhã", "Ovos e aveia", 350), ("Almoço", "Arroz, frango e feijão", 700), ("Jantar", "Batata doce e carne", 600)],
+        "Terça-feira": [("Café da manhã", "Pão integral com ovos", 320), ("Almoço", "Macarrão com carne moída", 680), ("Jantar", "Frango grelhado e purê", 550)]
     },
     "Emagrecimento": {
-        "Segunda-feira": [("Café da manhã", "Iogurte natural com chia", 200), ("Almoço", "Salada com frango", 400), ("Jantar", "Sopa de legumes", 300)],
-        "Terça-feira": [("Café da manhã", "Vitamina de banana com aveia", 250), ("Almoço", "Peixe grelhado com legumes", 420), ("Jantar", "Salada de atum", 320)]
+        "Segunda-feira": [("Café da manhã", "Iogurte com chia", 200), ("Almoço", "Salada com frango", 400), ("Jantar", "Sopa de legumes", 300)],
+        "Terça-feira": [("Café da manhã", "Vitamina de banana", 250), ("Almoço", "Peixe grelhado e legumes", 420), ("Jantar", "Salada de atum", 320)]
     }
 }
 
-# === SUPLEMENTOS E RECEITAS ===
 def dicas_suplementos(objetivo):
     if objetivo == "Hipertrofia":
         return ["Whey Protein", "Creatina", "BCAA", "Albumina"]
@@ -268,7 +237,7 @@ def dicas_suplementos(objetivo):
 def receitas_fitness():
     return ["Panqueca de banana", "Omelete de claras", "Shake de whey com aveia", "Frango com batata doce"]
 
-# === MENU DO ZEUS (APÓS LOGIN E PAGAMENTO) ===
+# === MENU PRINCIPAL ===
 if st.session_state["usuario"]:
     user = st.session_state["usuario"]
     nome_usuario = user[1]
