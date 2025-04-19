@@ -85,6 +85,12 @@ def gerar_link_pagamento(nome_usuario, email_usuario):
         if unicodedata.category(c) != 'Mn'
     )
 
+def normalizar_nome(nome):
+    return ''.join(
+        c for c in unicodedata.normalize('NFD', nome.lower())
+        if unicodedata.category(c) != 'Mn'
+    )
+
 def verificar_pagamento_por_nome(nome_usuario):
     headers = {"Authorization": f"Bearer {ACCESS_TOKEN}"}
     url = "https://api.mercadopago.com/v1/payments/search?sort=date_created&criteria=desc"
