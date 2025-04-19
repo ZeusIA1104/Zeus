@@ -175,7 +175,7 @@ elif menu == "Login":
                 st.stop()
             else:
                 st.session_state["usuario"] = user
-                st.experimental_rerun()
+                st.rerun
         else:
             st.error("Email ou senha incorretos.")
 
