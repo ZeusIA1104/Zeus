@@ -220,7 +220,7 @@ if st.session_state["usuario"]:
     aba = st.selectbox("Escolha uma seção", ["Treino", "Dieta da Semana", "Suplementos e Receitas", "Gerar PDF"])
 
     # === PAINEL DO ADMIN PARA LIBERAR ACESSO ===
-if email == ADMIN_EMAIL: "guibarcellosdaniel6@gmail.com"
+    if email == ADMIN_EMAIL: "guibarcellosdaniel6@gmail.com"
     st.subheader("Painel do Administrador - Liberar Acesso Manual")
 
     nome_alvo = st.text_input("Nome ou parte do nome do usuário para liberar o acesso:")
