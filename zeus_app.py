@@ -219,6 +219,19 @@ if st.session_state["usuario"]:
     st.subheader(f"Bem-vindo ao Zeus, {nome_usuario.split()[0]}!")
     aba = st.selectbox("Escolha uma seção", ["Treino", "Dieta da Semana", "Suplementos e Receitas", "Gerar PDF"])
 
+    # === PAINEL DO ADMIN PARA LIBERAR ACESSO ===
+if email == ADMIN_EMAIL: "guibarcellosdaniel6@gmail.com"
+    st.subheader("Painel do Administrador - Liberar Acesso Manual")
+
+    nome_alvo = st.text_input("Nome ou parte do nome do usuário para liberar o acesso:")
+    if st.button("Liberar acesso manualmente"):
+        conn = sqlite3.connect("zeus_usuarios.db")
+        cursor = conn.cursor()
+        cursor.execute("UPDATE usuarios SET status_pagamento='aprovado' WHERE nome LIKE ?", (f"%{nome_alvo}%",))
+        conn.commit()
+        conn.close()
+        st.success(f"Acesso liberado para usuários que contêm '{nome_alvo}' no nome.")
+   
     # --- Treino ---
     if aba == "Treino":
         grupo = st.selectbox("Grupo muscular", list(treinos.keys()))
