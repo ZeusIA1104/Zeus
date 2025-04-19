@@ -79,7 +79,7 @@ def gerar_link_pagamento(nome_usuario, email_usuario):
         return response.json()["init_point"]
     return None
 
- def normalizar_nome(nome):
+def normalizar_nome(nome):
     return ''.join(
         c for c in unicodedata.normalize('NFD', nome.lower())
         if unicodedata.category(c) != 'Mn'
