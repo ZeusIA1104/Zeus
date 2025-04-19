@@ -4,6 +4,7 @@ import hashlib
 from datetime import date
 from fpdf import FPDF
 import requests
+import unicodedata 
 
 # === CONFIG ===
 ACCESS_TOKEN = "APP_USR-507730409898756-041401-cfb0d18f342ea0b8ada862a23497b9ca-1026722362"
@@ -78,17 +79,27 @@ def gerar_link_pagamento(nome_usuario, email_usuario):
         return response.json()["init_point"]
     return None
 
+ def normalizar_nome(nome):
+    return ''.join(
+        c for c in unicodedata.normalize('NFD', nome.lower())
+        if unicodedata.category(c) != 'Mn'
+    )
+
 def verificar_pagamento_por_nome(nome_usuario):
     headers = {"Authorization": f"Bearer {ACCESS_TOKEN}"}
     url = "https://api.mercadopago.com/v1/payments/search?sort=date_created&criteria=desc"
     response = requests.get(url, headers=headers)
+
     if response.status_code == 200:
+        nome_normalizado = normalizar_nome(nome_usuario)
         results = response.json().get("results", [])
         for pagamento in results:
-            payer_name = pagamento.get("payer", {}).get("first_name", "").lower().strip()
+            payer_name = pagamento.get("payer", {}).get("first_name", "")
             status = pagamento.get("status", "")
-            if payer_name in nome_usuario.lower() and status == "approved":
-                return True
+            if status == "approved":
+                payer_normalizado = normalizar_nome(payer_name)
+                if payer_normalizado in nome_normalizado or nome_normalizado in payer_normalizado:
+                    return True
     return False
 
 # === FUNÇÕES DE IMC E PDF ===
