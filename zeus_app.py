@@ -3,7 +3,6 @@ import sqlite3
 import hashlib
 from datetime import date
 from fpdf import FPDF
-import matplotlib.pyplot as plt
 import requests
 
 # === CONFIG ===
@@ -148,6 +147,7 @@ if menu == "Cadastrar":
                            (nome, email, hash_senha(senha), genero, peso, altura, objetivo))
             conn.commit()
             conn.close()
+
             link = gerar_link_pagamento(nome, email)
             if link:
                 st.success("Cadastro realizado com sucesso!")
@@ -189,13 +189,14 @@ elif menu == "Login":
                 st.experimental_rerun()
         else:
             st.error("Email ou senha incorretos.")
+
 # === PAINEL DO ADMIN PARA LIBERAR ACESSO MANUAL ===
 if st.session_state["usuario"]:
     user = st.session_state["usuario"]
     email_user = user[2]
-    if email_user == ADMIN_EMAIL:
+    if email_user == ADMIN_EMAIL: "guibarcellosdaniel6@gmail.com"
         st.subheader("Painel do Administrador - Liberar Acesso Manual")
-        nome_alvo = st.text_input("Nome ou parte do nome do usuário para liberar o acesso:")
+        nome_alvo = st.text_input("Nome do usuário a liberar:")
         if st.button("Liberar acesso manualmente"):
             try:
                 conn = sqlite3.connect("zeus_usuarios.db")
@@ -203,6 +204,115 @@ if st.session_state["usuario"]:
                 cursor.execute("UPDATE usuarios SET status_pagamento='aprovado' WHERE nome LIKE ?", (f"%{nome_alvo}%",))
                 conn.commit()
                 conn.close()
-                st.success(f"Acesso de '{nome_alvo}' foi liberado com sucesso!")
+                st.success(f"Acesso de '{nome_alvo}' liberado com sucesso!")
             except Exception as e:
                 st.error(f"Erro ao liberar acesso: {e}")
+# === TREINOS POR GRUPO ===
+treinos = {
+    "Peito": {
+        "Hipertrofia": ["Supino reto", "Supino inclinado", "Crucifixo", "Crossover", "Flexão com carga"],
+        "Emagrecimento": ["Flexão", "Supino com pouco peso", "Pullover leve", "Crucifixo inclinado", "Circuito peitoral"],
+        "Manutenção": ["Supino reto", "Crucifixo", "Peck deck", "Flexão", "Crossover"]
+    },
+    "Costas": {
+        "Hipertrofia": ["Remada curvada", "Puxada frontal", "Levantamento terra", "Puxada aberta", "Remada baixa"],
+        "Emagrecimento": ["Puxada leve", "Remada unilateral", "Pull down", "Crucifixo invertido", "Barra assistida"],
+        "Manutenção": ["Puxada frente", "Remada baixa", "Remada curvada", "Barra fixa", "Puxada fechada"]
+    }
+}
+
+def gerar_treino(grupo, objetivo):
+    return treinos.get(grupo, {}).get(objetivo, ["Treino não encontrado."])
+
+# === DIETAS SEMANAIS ===
+dietas_semanais = {
+    "Hipertrofia": {
+        "Segunda-feira": [("Café da manhã", "Ovos mexidos com aveia", 350), ("Almoço", "Arroz, feijão e frango", 700), ("Jantar", "Batata doce e carne moída", 600)],
+        "Terça-feira": [("Café da manhã", "Pão integral com ovos", 320), ("Almoço", "Macarrão com carne moída", 680), ("Jantar", "Frango grelhado com purê", 550)]
+    },
+    "Emagrecimento": {
+        "Segunda-feira": [("Café da manhã", "Iogurte natural com chia", 200), ("Almoço", "Salada com frango", 400), ("Jantar", "Sopa de legumes", 300)],
+        "Terça-feira": [("Café da manhã", "Vitamina de banana com aveia", 250), ("Almoço", "Peixe grelhado com legumes", 420), ("Jantar", "Salada de atum", 320)]
+    }
+}
+
+# === SUPLEMENTOS E RECEITAS ===
+def dicas_suplementos(objetivo):
+    if objetivo == "Hipertrofia":
+        return ["Whey Protein", "Creatina", "BCAA", "Albumina"]
+    elif objetivo == "Emagrecimento":
+        return ["Termogênico", "L-Carnitina", "Chá verde", "Cafeína"]
+    else:
+        return ["Multivitamínico", "Ômega 3", "Vitamina D"]
+
+def receitas_fitness():
+    return ["Panqueca de banana", "Omelete de claras", "Shake de whey com aveia", "Frango com batata doce"]
+
+# === MENU DO ZEUS (APÓS LOGIN E PAGAMENTO) ===
+if st.session_state["usuario"]:
+    user = st.session_state["usuario"]
+    nome_usuario = user[1]
+    email_user = user[2]
+    objetivo_user = user[7]
+    status_pag = buscar_status_pagamento(email_user)
+
+    if status_pag != "aprovado":
+        st.warning("Pagamento não confirmado.")
+        link = gerar_link_pagamento(nome_usuario, email_user)
+        if link:
+            st.markdown(f"[Clique aqui para pagar R$49,90]({link})", unsafe_allow_html=True)
+        if st.button("Verificar Pagamento"):
+            if verificar_pagamento_por_nome(nome_usuario):
+                atualizar_status_pagamento(email_user, "aprovado")
+                st.success("Pagamento confirmado. Recarregando...")
+                st.experimental_rerun()
+            else:
+                st.warning("Pagamento ainda não identificado.")
+        st.stop()
+
+    st.subheader(f"Bem-vindo ao Zeus, {nome_usuario.split()[0]}!")
+    aba = st.selectbox("Escolha uma seção", ["Treino", "Dieta da Semana", "Suplementos e Receitas", "Gerar PDF"])
+
+    if aba == "Treino":
+        grupo = st.selectbox("Grupo muscular", list(treinos.keys()))
+        if st.button("Gerar Treino"):
+            treino = gerar_treino(grupo, objetivo_user)
+            st.subheader(f"Treino para {grupo} - {objetivo_user}")
+            for ex in treino:
+                st.write("- ", ex)
+            st.session_state["treino"] = treino
+
+    elif aba == "Dieta da Semana":
+        if st.button("Gerar Dieta da Semana"):
+            dieta_dias = dietas_semanais.get(objetivo_user, {})
+            st.subheader(f"Dieta semanal - {objetivo_user}")
+            plano_dieta_semana = []
+            for dia, refeicoes in dieta_dias.items():
+                st.markdown(f"*{dia}*")
+                for refeicao, descricao, kcal in refeicoes:
+                    st.write(f"- {refeicao}: {descricao} ({kcal} kcal)")
+                    plano_dieta_semana.append(f"{dia} - {refeicao}: {descricao} ({kcal} kcal)")
+            st.session_state["dieta"] = plano_dieta_semana
+
+    elif aba == "Suplementos e Receitas":
+        st.subheader("Suplementos recomendados:")
+        for s in dicas_suplementos(objetivo_user):
+            st.write("- ", s)
+        st.subheader("Receitas fitness:")
+        for r in receitas_fitness():
+            st.write("- ", r)
+
+    elif aba == "Gerar PDF":
+        conteudo_pdf = []
+        if "treino" in st.session_state:
+            conteudo_pdf.append("Plano de Treino:")
+            conteudo_pdf.extend(st.session_state["treino"])
+        if "dieta" in st.session_state:
+            conteudo_pdf.append("Plano de Dieta:")
+            conteudo_pdf.extend(st.session_state["dieta"])
+        if conteudo_pdf:
+            caminho = gerar_pdf(f"Plano Zeus - {nome_usuario}", conteudo_pdf)
+            with open(caminho, "rb") as f:
+                st.download_button("Baixar PDF do Plano", f, file_name=caminho)
+        else:
+            st.info("Gere treino ou dieta antes de exportar.")
