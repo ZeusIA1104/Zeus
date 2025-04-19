@@ -180,9 +180,12 @@ elif menu == "Login":
             st.error("Email ou senha incorretos.")
 
 # === PAINEL DO ADMIN PARA LIBERAR ACESSO MANUAL ===
-if st.session_state["usuario"]:
-    user = st.session_state["usuario"]
-    email_user = user[2]
+if st.session_state["usuario"] or email == ADMIN_EMAIL:
+    email_user = (
+        st.session_state["usuario"][2]
+        if st.session_state["usuario"]
+        else ADMIN_EMAIL
+    )
 
     if email_user == ADMIN_EMAIL:
         st.markdown("---")
