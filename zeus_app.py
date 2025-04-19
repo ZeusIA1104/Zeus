@@ -4,7 +4,6 @@ import hashlib
 from datetime import date
 from fpdf import FPDF
 import matplotlib.pyplot as plt
-import plotly.graph_objects as go
 import requests
 
 # === CONFIG ===
@@ -30,6 +29,7 @@ def criar_banco():
     """)
     conn.commit()
     conn.close()
+
 # === AUTENTICAÇÃO ===
 def hash_senha(senha):
     return hashlib.sha256(senha.encode()).hexdigest()
@@ -56,7 +56,6 @@ def atualizar_status_pagamento(email, status):
     cursor.execute("UPDATE usuarios SET status_pagamento=? WHERE email=?", (status, email))
     conn.commit()
     conn.close()
-
 # === PAGAMENTO ===
 def gerar_link_pagamento(nome_usuario, email_usuario):
     headers = {
@@ -81,17 +80,13 @@ def gerar_link_pagamento(nome_usuario, email_usuario):
     return None
 
 def verificar_pagamento_por_nome(nome_usuario):
-    if nome_usuario.lower() == ADMIN_EMAIL.split("@")[0].lower():
-        return True
-
     headers = {"Authorization": f"Bearer {ACCESS_TOKEN}"}
     url = "https://api.mercadopago.com/v1/payments/search?sort=date_created&criteria=desc"
     response = requests.get(url, headers=headers)
-
     if response.status_code == 200:
         results = response.json().get("results", [])
         for pagamento in results:
-            payer_name = pagamento.get("payer", {}).get("first_name", "").lower()
+            payer_name = pagamento.get("payer", {}).get("first_name", "").lower().strip()
             status = pagamento.get("status", "")
             if payer_name in nome_usuario.lower() and status == "approved":
                 return True
@@ -126,6 +121,7 @@ def gerar_pdf(titulo, conteudo):
     pdf_path = titulo.replace(" ", "_") + ".pdf"
     pdf.output(pdf_path)
     return pdf_path
+
 # === INÍCIO DA INTERFACE ===
 st.set_page_config(page_title="ZEUS", layout="centered")
 criar_banco()
@@ -133,13 +129,12 @@ st.title("ZEUS - Acesso")
 
 if "usuario" not in st.session_state:
     st.session_state["usuario"] = None
-
 menu = st.selectbox("Menu", ["Login", "Cadastrar"])
 email = st.text_input("Email")
 senha = st.text_input("Senha", type="password")
 
 if menu == "Cadastrar":
-    nome = st.text_input("Nome completo")
+    nome = st.text_input("Nome completo (use o mesmo do Pix)")
     genero = st.selectbox("Gênero", ["Masculino", "Feminino", "Outro"])
     peso = st.number_input("Peso (kg)", 30.0, 200.0)
     altura = st.number_input("Altura (m)", 1.0, 2.5)
@@ -153,17 +148,17 @@ if menu == "Cadastrar":
                            (nome, email, hash_senha(senha), genero, peso, altura, objetivo))
             conn.commit()
             conn.close()
-
             link = gerar_link_pagamento(nome, email)
             if link:
                 st.success("Cadastro realizado com sucesso!")
                 st.markdown(f"[Clique aqui para pagar R$49,90 e liberar o acesso]({link})", unsafe_allow_html=True)
+                st.info("Após o pagamento, clique no botão abaixo:")
                 if st.button("Verificar Pagamento"):
                     if verificar_pagamento_por_nome(nome):
                         atualizar_status_pagamento(email, "aprovado")
                         st.success("Pagamento confirmado! Faça login para acessar o Zeus.")
                     else:
-                        st.warning("Pagamento ainda não identificado. Tente novamente em alguns minutos.")
+                        st.warning("Pagamento ainda não identificado.")
             else:
                 st.warning("Não foi possível gerar o link de pagamento.")
         except:
@@ -180,6 +175,7 @@ elif menu == "Login":
                 link = gerar_link_pagamento(nome_usuario, email)
                 if link:
                     st.markdown(f"[Clique aqui para pagar R$49,90]({link})", unsafe_allow_html=True)
+                st.info("Após o pagamento, clique no botão abaixo:")
                 if st.button("Verificar Pagamento"):
                     if verificar_pagamento_por_nome(nome_usuario):
                         atualizar_status_pagamento(email, "aprovado")
@@ -193,97 +189,20 @@ elif menu == "Login":
                 st.experimental_rerun()
         else:
             st.error("Email ou senha incorretos.")
-# === BLOQUEIO DE ACESSO E MENU PRINCIPAL ===
+# === PAINEL DO ADMIN PARA LIBERAR ACESSO MANUAL ===
 if st.session_state["usuario"]:
     user = st.session_state["usuario"]
-    nome_usuario = user[1]
     email_user = user[2]
-    objetivo_user = user[7]
-    status_pag = buscar_status_pagamento(email_user)
-
-    if status_pag != "aprovado":
-        st.warning("Pagamento não confirmado. Faça o pagamento para continuar.")
-        link = gerar_link_pagamento(nome_usuario, email_user)
-        if link:
-            st.markdown(f"[Clique aqui para pagar R$49,90]({link})", unsafe_allow_html=True)
-        if st.button("Verificar Pagamento"):
-            if verificar_pagamento_por_nome(nome_usuario):
-                atualizar_status_pagamento(email_user, "aprovado")
-                st.success("Pagamento confirmado! Recarregue a página.")
-                st.experimental_rerun()
-            else:
-                st.warning("Pagamento ainda não identificado.")
-        st.stop()
-
-    # === MENU DO ZEUS ===
-    st.subheader(f"Bem-vindo ao Zeus, {nome_usuario.split()[0]}!")
-    aba = st.selectbox("Escolha uma seção", ["Treino", "Dieta da Semana", "Suplementos e Receitas", "Gerar PDF"])
-
-    # === PAINEL DO ADMIN PARA LIBERAR ACESSO ===
-    if email == ADMIN_EMAIL: "guibarcellosdaniel6@gmail.com"
-    st.subheader("Painel do Administrador - Liberar Acesso Manual")
-
-    nome_alvo = st.text_input("Nome ou parte do nome do usuário para liberar o acesso:")
-    if st.button("Liberar acesso manualmente"):
-        conn = sqlite3.connect("zeus_usuarios.db")
-        cursor = conn.cursor()
-        cursor.execute("UPDATE usuarios SET status_pagamento='aprovado' WHERE nome LIKE ?", (f"%{nome_alvo}%",))
-        conn.commit()
-        conn.close()
-        st.success(f"Acesso liberado para usuários que contêm '{nome_alvo}' no nome.")
-   
-    # --- Treino ---
-    if aba == "Treino":
-        grupo = st.selectbox("Grupo muscular", list(treinos.keys()))
-        if st.button("Gerar Treino"):
-            treino = gerar_treino(grupo, objetivo_user)
-            st.subheader(f"Treino para {grupo} - {objetivo_user}")
-            for ex in treino:
-                st.write("- ", ex)
-            st.session_state["treino"] = treino
-
-    # --- Dieta da Semana ---
-    elif aba == "Dieta da Semana":
-        if st.button("Gerar Dieta da Semana"):
-            dieta_dias = dietas_semanais.get(objetivo_user, {})
-            st.subheader(f"Dieta semanal para: {objetivo_user}")
-            plano_dieta_semana = []
-            for dia, refeicoes in dieta_dias.items():
-                st.markdown(f"{dia}")
-                for refeicao, descricao, kcal in refeicoes:
-                    st.write(f"- {refeicao}: {descricao} ({kcal} kcal)")
-                    plano_dieta_semana.append(f"{dia} - {refeicao}: {descricao} ({kcal} kcal)")
-            st.session_state["dieta"] = plano_dieta_semana
-
-    # --- Suplementos e Receitas ---
-    elif aba == "Suplementos e Receitas":
-        st.subheader("Suplementos indicados:")
-        for suplemento in dicas_suplementos(objetivo_user):
-            st.write("- ", suplemento)
-        st.subheader("Receitas fitness:")
-        for r in receitas_fitness():
-            st.write("- ", r)
-
-    # --- Geração de PDF ---
-    elif aba == "Gerar PDF":
-        conteudo_pdf = []
-        if "treino" in st.session_state:
-            conteudo_pdf.append("Treino:")
-            conteudo_pdf.extend(st.session_state["treino"])
-        if "dieta" in st.session_state:
-            conteudo_pdf.append("Dieta:")
-            conteudo_pdf.extend(st.session_state["dieta"])
-
-        if conteudo_pdf:
-            caminho_pdf = gerar_pdf(f"Plano Zeus - {nome_usuario}", conteudo_pdf)
-            with open(caminho_pdf, "rb") as f:
-                st.download_button("Baixar Plano em PDF", f, file_name=caminho_pdf)
-        else:
-            st.info("Nenhum conteúdo disponível para gerar PDF.")
-            # === LIBERAR MANUALMENTE ===
-conn = sqlite3.connect("zeus_usuarios.db")
-cursor = conn.cursor()
-cursor.execute("UPDATE usuarios SET status_pagamento='aprovado' WHERE nome LIKE '%Isabela%'")
-conn.commit()
-conn.close()
-st.success("Acesso da Isabela foi liberado manualmente com sucesso!")
+    if email_user == ADMIN_EMAIL:
+        st.subheader("Painel do Administrador - Liberar Acesso Manual")
+        nome_alvo = st.text_input("Nome ou parte do nome do usuário para liberar o acesso:")
+        if st.button("Liberar acesso manualmente"):
+            try:
+                conn = sqlite3.connect("zeus_usuarios.db")
+                cursor = conn.cursor()
+                cursor.execute("UPDATE usuarios SET status_pagamento='aprovado' WHERE nome LIKE ?", (f"%{nome_alvo}%",))
+                conn.commit()
+                conn.close()
+                st.success(f"Acesso de '{nome_alvo}' foi liberado com sucesso!")
+            except Exception as e:
+                st.error(f"Erro ao liberar acesso: {e}")
