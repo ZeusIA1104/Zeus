@@ -213,7 +213,9 @@ if st.session_state["usuario"]:
     email_user = user[2]
 
     if email_user == ADMIN_EMAIL:
+        st.markdown("---")
         st.subheader("Painel do Administrador - Liberar Acesso Manual")
+
         nome_alvo = st.text_input("Nome do usuário a liberar:")
         if st.button("Liberar acesso manualmente"):
             try:
@@ -222,7 +224,7 @@ if st.session_state["usuario"]:
                 cursor.execute("UPDATE usuarios SET status_pagamento='aprovado' WHERE nome LIKE ?", (f"%{nome_alvo}%",))
                 conn.commit()
                 conn.close()
-                st.success(f"Acesso de '{nome_alvo}' liberado com sucesso!")
+                st.success(f"Acesso de '{nome_alvo}' foi liberado com sucesso!")
             except Exception as e:
                 st.error(f"Erro ao liberar acesso: {e}")
 # === TREINOS POR GRUPO ===
