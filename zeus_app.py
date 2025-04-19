@@ -469,19 +469,5 @@ def gerar_treino(grupo, objetivo):
     return treinos.get(grupo, {}).get(objetivo, ["Nenhum treino disponível para essa combinação."])
 
     
-    # --- Geração de PDF ---
-    elif aba == "Gerar PDF":
-        conteudo_pdf = []
-        if "treino" in st.session_state:
-            conteudo_pdf.append("Treino:")
-            conteudo_pdf.extend(st.session_state["treino"])
-        if "dieta" in st.session_state:
-            conteudo_pdf.append("Dieta:")
-            conteudo_pdf.extend(st.session_state["dieta"])
 
-        if conteudo_pdf:
-            caminho_pdf = gerar_pdf(f"Plano Zeus - {nome_usuario}", conteudo_pdf)
-            with open(caminho_pdf, "rb") as f:
-                st.download_button("Baixar Plano em PDF", f, file_name=caminho_pdf)
-        else:
-            st.info("Nenhum conteúdo disponível para gerar PDF.")
+       
