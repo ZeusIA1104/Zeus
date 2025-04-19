@@ -422,12 +422,180 @@ def gerar_treino(grupo, objetivo):
 # === DIETAS SEMANAIS ===
 dietas_semanais = {
     "Hipertrofia": {
-        "Segunda-feira": [("Café da manhã", "Ovos e aveia", 350), ("Almoço", "Arroz, frango e feijão", 700), ("Jantar", "Batata doce e carne", 600)],
-        "Terça-feira": [("Café da manhã", "Pão integral com ovos", 320), ("Almoço", "Macarrão com carne moída", 680), ("Jantar", "Frango grelhado e purê", 550)]
+        "Segunda-feira": [
+            ("Café da manhã", "Ovos mexidos com aveia e banana", 450),
+            ("Almoço", "Arroz, feijão, frango grelhado e legumes", 700),
+            ("Café da tarde", "Sanduíche integral com pasta de amendoim", 400),
+            ("Jantar", "Batata doce com carne moída", 600)
+        ],
+        "Terça-feira": [
+            ("Café da manhã", "Panqueca de aveia com mel", 430),
+            ("Almoço", "Macarrão integral com carne moída e legumes", 720),
+            ("Café da tarde", "Vitamina de banana com aveia e leite", 450),
+            ("Jantar", "Omelete com arroz e salada", 580)
+        ],
+        "Quarta-feira": [
+            ("Café da manhã", "Whey com leite e tapioca com ovo", 480),
+            ("Almoço", "Arroz integral, feijão, frango grelhado", 700),
+            ("Café da tarde", "Iogurte natural com granola", 420),
+            ("Jantar", "Purê de batata com carne desfiada", 600)
+        ],
+        "Quinta-feira": [
+            ("Café da manhã", "Pão integral com ovo e queijo", 470),
+            ("Almoço", "Estrogonofe de frango com arroz e legumes", 710),
+            ("Café da tarde", "Mix de castanhas e frutas secas", 400),
+            ("Jantar", "Omelete com batata doce e salada", 590)
+        ],
+        "Sexta-feira": [
+            ("Café da manhã", "Tapioca com ovo e suco natural", 450),
+            ("Almoço", "Arroz, lentilha, bife grelhado, salada", 730),
+            ("Café da tarde", "Whey com leite e banana", 460),
+            ("Jantar", "Frango desfiado com purê de mandioca", 580)
+        ],
+        "Sábado": [
+            ("Café da manhã", "Ovos mexidos com pão integral", 440),
+            ("Almoço", "Arroz integral, frango e brócolis", 690),
+            ("Café da tarde", "Iogurte com granola", 420),
+            ("Jantar", "Batata inglesa, frango e legumes cozidos", 610)
+        ],
+        "Domingo": [
+            ("Café da manhã", "Panqueca proteica com mel e frutas", 470),
+            ("Almoço", "Feijoada magra com arroz e salada", 750),
+            ("Café da tarde", "Sanduíche natural com frango", 430),
+            ("Jantar", "Sopa de batata doce com frango", 580)
+        ]
     },
     "Emagrecimento": {
-        "Segunda-feira": [("Café da manhã", "Iogurte com chia", 200), ("Almoço", "Salada com frango", 400), ("Jantar", "Sopa de legumes", 300)],
-        "Terça-feira": [("Café da manhã", "Vitamina de banana", 250), ("Almoço", "Peixe grelhado e legumes", 420), ("Jantar", "Salada de atum", 320)]
+        "Segunda-feira": [
+            ("Café da manhã", "Iogurte natural com chia e maçã", 220),
+            ("Almoço", "Peito de frango grelhado, arroz integral e legumes", 400),
+            ("Café da tarde", "Suco verde + castanhas", 200),
+            ("Jantar", "Omelete de claras com espinafre", 300)
+        ],
+        "Terça-feira": [
+            ("Café da manhã", "Vitamina de mamão com linhaça", 230),
+            ("Almoço", "Salada com atum, ovos e azeite", 410),
+            ("Café da tarde", "Torrada integral com cottage", 210),
+            ("Jantar", "Sopa de legumes com frango", 290)
+        ],
+        "Quarta-feira": [
+            ("Café da manhã", "Tapioca com ovo e chá verde", 240),
+            ("Almoço", "Filé de peixe grelhado com arroz integral", 420),
+            ("Café da tarde", "Banana com pasta de amendoim", 220),
+            ("Jantar", "Salada com frango desfiado", 310)
+        ],
+        "Quinta-feira": [
+            ("Café da manhã", "Ovos cozidos com tomate", 230),
+            ("Almoço", "Arroz integral, lentilha e peito de frango", 430),
+            ("Café da tarde", "Mix de frutas com chia", 210),
+            ("Jantar", "Omelete leve com legumes", 290)
+        ],
+        "Sexta-feira": [
+            ("Café da manhã", "Smoothie de frutas vermelhas", 210),
+            ("Almoço", "Frango grelhado, abobrinha, salada", 390),
+            ("Café da tarde", "Iogurte light com granola", 220),
+            ("Jantar", "Sopa leve de abóbora", 300)
+        ],
+        "Sábado": [
+            ("Café da manhã", "Tapioca com cottage", 240),
+            ("Almoço", "Peixe assado, arroz integral e salada", 410),
+            ("Café da tarde", "Suco natural e frutas secas", 200),
+            ("Jantar", "Salada completa com ovo cozido", 310)
+        ],
+        "Domingo": [
+            ("Café da manhã", "Ovo cozido com torrada integral", 230),
+            ("Almoço", "Frango grelhado e legumes refogados", 400),
+            ("Café da tarde", "Torradas com pasta de amendoim", 220),
+            ("Jantar", "Sopa detox de legumes", 280)
+        ]
+    },
+    "Manutenção": {
+        "Segunda-feira": [
+            ("Café da manhã", "Pão integral com ovo mexido", 350),
+            ("Almoço", "Arroz, feijão, frango e salada", 650),
+            ("Café da tarde", "Iogurte com frutas", 300),
+            ("Jantar", "Omelete com legumes", 400)
+        ],
+        "Terça-feira": [
+            ("Café da manhã", "Panqueca de banana com aveia", 360),
+            ("Almoço", "Macarrão com carne e legumes", 670),
+            ("Café da tarde", "Mix de castanhas", 320),
+            ("Jantar", "Arroz e frango desfiado com cenoura", 420)
+        ],
+        "Quarta-feira": [
+            ("Café da manhã", "Tapioca com queijo e chá", 340),
+            ("Almoço", "Frango grelhado, arroz e salada", 630),
+            ("Café da tarde", "Fruta com aveia", 290),
+            ("Jantar", "Sopa de legumes", 390)
+        ],
+        "Quinta-feira": [
+            ("Café da manhã", "Pão integral com pasta de amendoim", 360),
+            ("Almoço", "Estrogonofe leve, arroz e batata palha", 640),
+            ("Café da tarde", "Suco com torradas", 300),
+            ("Jantar", "Omelete com legumes", 410)
+        ],
+        "Sexta-feira": [
+            ("Café da manhã", "Ovos mexidos com tapioca", 340),
+            ("Almoço", "Arroz, feijão, carne moída e couve", 650),
+            ("Café da tarde", "Iogurte com chia", 290),
+            ("Jantar", "Sanduíche natural", 400)
+        ],
+        "Sábado": [
+            ("Café da manhã", "Vitamina com leite, banana e aveia", 370),
+            ("Almoço", "Feijão tropeiro leve com salada", 670),
+            ("Café da tarde", "Frutas secas e chá", 280),
+            ("Jantar", "Sopa de frango", 400)
+        ],
+        "Domingo": [
+            ("Café da manhã", "Pão integral com ovo", 350),
+            ("Almoço", "Arroz, frango grelhado e brócolis", 640),
+            ("Café da tarde", "Banana com mel", 300),
+            ("Jantar", "Macarrão leve com molho caseiro", 420)
+        ]
+    },
+    "Ganho de Massa Muscular": {
+        "Segunda-feira": [
+            ("Café da manhã", "Ovos com batata doce", 500),
+            ("Almoço", "Arroz, feijão, carne e salada", 720),
+            ("Café da tarde", "Whey protein com aveia e banana", 460),
+            ("Jantar", "Purê de batata com frango desfiado", 630)
+        ],
+        "Terça-feira": [
+            ("Café da manhã", "Panqueca de aveia e mel", 470),
+            ("Almoço", "Arroz integral, frango e legumes", 710),
+            ("Café da tarde", "Iogurte, banana e granola", 440),
+            ("Jantar", "Batata doce com carne moída", 600)
+        ],
+        "Quarta-feira": [
+            ("Café da manhã", "Tapioca com ovo e queijo", 450),
+            ("Almoço", "Macarrão com carne e brócolis", 720),
+            ("Café da tarde", "Sanduíche de atum com integral", 470),
+            ("Jantar", "Frango com mandioca cozida", 620)
+        ],
+        "Quinta-feira": [
+            ("Café da manhã", "Omelete com aveia", 480),
+            ("Almoço", "Arroz, lentilha e carne", 700),
+            ("Café da tarde", "Whey com banana e pasta de amendoim", 480),
+            ("Jantar", "Frango com purê e salada", 610)
+        ],
+        "Sexta-feira": [
+            ("Café da manhã", "Pão integral com ovos", 460),
+            ("Almoço", "Arroz, feijão, frango grelhado", 730),
+            ("Café da tarde", "Shake de proteína com frutas", 450),
+            ("Jantar", "Tapioca com frango e salada", 600)
+        ],
+        "Sábado": [
+            ("Café da manhã", "Vitamina de frutas com aveia", 470),
+            ("Almoço", "Carne moída, arroz e legumes", 710),
+            ("Café da tarde", "Pão integral com queijo", 440),
+            ("Jantar", "Frango grelhado com batata inglesa", 630)
+        ],
+        "Domingo": [
+            ("Café da manhã", "Whey + banana + aveia", 460),
+            ("Almoço", "Feijoada magra com arroz e couve", 750),
+            ("Café da tarde", "Torradas com ovo", 430),
+            ("Jantar", "Massa integral com carne moída", 640)
+        ]
     }
 }
 
