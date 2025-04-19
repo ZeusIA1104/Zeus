@@ -267,3 +267,10 @@ if st.session_state["usuario"]:
                 st.download_button("Baixar Plano em PDF", f, file_name=caminho_pdf)
         else:
             st.info("Nenhum conteúdo disponível para gerar PDF.")
+            # === LIBERAR MANUALMENTE ===
+conn = sqlite3.connect("zeus_usuarios.db")
+cursor = conn.cursor()
+cursor.execute("UPDATE usuarios SET status_pagamento='aprovado' WHERE nome LIKE '%Isabela%'")
+conn.commit()
+conn.close()
+st.success("Acesso da Isabela foi liberado manualmente com sucesso!")
