@@ -30,6 +30,7 @@ def criar_banco():
     """)
     conn.commit()
     conn.close()
+
 # === AUTENTICAÇÃO ===
 def hash_senha(senha):
     return hashlib.sha256(senha.encode()).hexdigest()
@@ -42,6 +43,13 @@ def verificar_login(email, senha):
     conn.close()
     return user
 
+def atualizar_status_pagamento(email, status):
+    conn = sqlite3.connect("zeus_usuarios.db")
+    cursor = conn.cursor()
+    cursor.execute("UPDATE usuarios SET status_pagamento=? WHERE email=?", (status, email))
+    conn.commit()
+    conn.close()
+
 def buscar_status_pagamento(email):
     conn = sqlite3.connect("zeus_usuarios.db")
     cursor = conn.cursor()
@@ -50,15 +58,8 @@ def buscar_status_pagamento(email):
     conn.close()
     return resultado[0] if resultado else "pendente"
 
-def atualizar_status_pagamento(email, status):
-    conn = sqlite3.connect("zeus_usuarios.db")
-    cursor = conn.cursor()
-    cursor.execute("UPDATE usuarios SET status_pagamento=? WHERE email=?", (status, email))
-    conn.commit()
-    conn.close()
-
 # === PAGAMENTO ===
-def gerar_link_pagamento(nome_usuario, email_usuario):
+def gerar_link_pagamento(nome_usuario):
     headers = {
         "Authorization": f"Bearer {ACCESS_TOKEN}",
         "Content-Type": "application/json"
@@ -71,8 +72,7 @@ def gerar_link_pagamento(nome_usuario, email_usuario):
             "unit_price": 49.90
         }],
         "payer": {
-            "name": nome_usuario,
-            "email": email_usuario
+            "name": nome_usuario
         }
     }
     response = requests.post("https://api.mercadopago.com/checkout/preferences", headers=headers, json=body)
@@ -81,7 +81,7 @@ def gerar_link_pagamento(nome_usuario, email_usuario):
     return None
 
 def verificar_pagamento_por_nome(nome_usuario):
-    if nome_usuario.lower() == ADMIN_EMAIL.split("@")[0].lower():
+    if nome_usuario.lower() == "guilhermeadm6" or nome_usuario.lower() in ADMIN_EMAIL:
         return True
 
     headers = {"Authorization": f"Bearer {ACCESS_TOKEN}"}
@@ -91,42 +91,13 @@ def verificar_pagamento_por_nome(nome_usuario):
     if response.status_code == 200:
         results = response.json().get("results", [])
         for pagamento in results:
-            payer_name = pagamento.get("payer", {}).get("first_name", "").lower()
             status = pagamento.get("status", "")
-            if payer_name in nome_usuario.lower() and status == "approved":
+            payer = pagamento.get("payer", {})
+            nome_pagador = payer.get("first_name", "").lower()
+            if nome_usuario.lower() in nome_pagador and status == "approved":
                 return True
     return False
-
-# === FUNÇÕES DE IMC E PDF ===
-def calcular_imc(peso, altura):
-    return round(peso / (altura ** 2), 2)
-
-def classificar_imc(imc):
-    if imc < 18.5:
-        return "Abaixo do peso"
-    elif imc < 25:
-        return "Peso normal"
-    elif imc < 30:
-        return "Sobrepeso"
-    elif imc < 35:
-        return "Obesidade Grau I"
-    elif imc < 40:
-        return "Obesidade Grau II"
-    else:
-        return "Obesidade Grau III"
-
-def gerar_pdf(titulo, conteudo):
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", size=12)
-    pdf.cell(200, 10, txt=titulo, ln=True, align="C")
-    pdf.ln(10)
-    for linha in conteudo:
-        pdf.multi_cell(0, 10, txt=linha)
-    pdf_path = titulo.replace(" ", "_") + ".pdf"
-    pdf.output(pdf_path)
-    return pdf_path
-# === INÍCIO DA INTERFACE ===
+# === INTERFACE INICIAL ===
 st.set_page_config(page_title="ZEUS", layout="centered")
 criar_banco()
 st.title("ZEUS - Acesso")
@@ -138,13 +109,14 @@ menu = st.selectbox("Menu", ["Login", "Cadastrar"])
 email = st.text_input("Email")
 senha = st.text_input("Senha", type="password")
 
+# === CADASTRO ===
 if menu == "Cadastrar":
     nome = st.text_input("Nome completo")
     genero = st.selectbox("Gênero", ["Masculino", "Feminino", "Outro"])
     peso = st.number_input("Peso (kg)", 30.0, 200.0)
     altura = st.number_input("Altura (m)", 1.0, 2.5)
     objetivo = st.selectbox("Objetivo", ["Hipertrofia", "Emagrecimento", "Manutenção", "Ganho de Massa Muscular"])
-
+    
     if st.button("Cadastrar"):
         try:
             conn = sqlite3.connect("zeus_usuarios.db")
@@ -153,57 +125,34 @@ if menu == "Cadastrar":
                            (nome, email, hash_senha(senha), genero, peso, altura, objetivo))
             conn.commit()
             conn.close()
-
-            link = gerar_link_pagamento(nome, email)
+            link = gerar_link_pagamento(nome)
             if link:
                 st.success("Cadastro realizado com sucesso!")
                 st.markdown(f"[Clique aqui para pagar R$49,90 e liberar o acesso]({link})", unsafe_allow_html=True)
-                if st.button("Verificar Pagamento"):
-                    if verificar_pagamento_por_nome(nome):
-                        atualizar_status_pagamento(email, "aprovado")
-                        st.success("Pagamento confirmado! Faça login para acessar o Zeus.")
-                    else:
-                        st.warning("Pagamento ainda não identificado. Tente novamente em alguns minutos.")
             else:
-                st.warning("Não foi possível gerar o link de pagamento.")
+                st.warning("Cadastro feito, mas não conseguimos gerar o link de pagamento.")
         except:
             st.error("Erro: E-mail já cadastrado ou dados inválidos.")
 
+# === LOGIN ===
 elif menu == "Login":
     if st.button("Entrar"):
         user = verificar_login(email, senha)
         if user:
-            nome_usuario = user[1]
-            status_pag = buscar_status_pagamento(email)
-            if status_pag != "aprovado":
-                st.warning("Pagamento não confirmado. Faça o pagamento para continuar.")
-                link = gerar_link_pagamento(nome_usuario, email)
-                if link:
-                    st.markdown(f"[Clique aqui para pagar R$49,90]({link})", unsafe_allow_html=True)
-                if st.button("Verificar Pagamento"):
-                    if verificar_pagamento_por_nome(nome_usuario):
-                        atualizar_status_pagamento(email, "aprovado")
-                        st.success("Pagamento confirmado! Recarregue a página.")
-                        st.experimental_rerun()
-                    else:
-                        st.warning("Pagamento ainda não identificado.")
-                st.stop()
-            else:
-                st.session_state["usuario"] = user
-                st.experimental_rerun()
+            st.session_state["usuario"] = user
+            st.experimental_rerun()
         else:
-            st.error("Email ou senha incorretos.")
-# === BLOQUEIO DE ACESSO E MENU PRINCIPAL ===
+            st.error("E-mail ou senha incorretos.")
+
+# === BLOQUEIO DE ACESSO APÓS LOGIN ===
 if st.session_state["usuario"]:
     user = st.session_state["usuario"]
-    nome_usuario = user[1]
     email_user = user[2]
-    objetivo_user = user[7]
-    status_pag = buscar_status_pagamento(email_user)
+    nome_usuario = user[1]
 
-    if status_pag != "aprovado":
-        st.warning("Pagamento não confirmado. Faça o pagamento para continuar.")
-        link = gerar_link_pagamento(nome_usuario, email_user)
+    if not verificar_pagamento_por_nome(nome_usuario):
+        st.warning("Pagamento não confirmado. Pague para liberar o acesso.")
+        link = gerar_link_pagamento(nome_usuario)
         if link:
             st.markdown(f"[Clique aqui para pagar R$49,90]({link})", unsafe_allow_html=True)
         if st.button("Verificar Pagamento"):
@@ -212,28 +161,14 @@ if st.session_state["usuario"]:
                 st.success("Pagamento confirmado! Recarregue a página.")
                 st.experimental_rerun()
             else:
-                st.warning("Pagamento ainda não identificado.")
+                st.error("Pagamento ainda não identificado.")
         st.stop()
-
-    # === MENU DO ZEUS ===
-    st.subheader(f"Bem-vindo ao Zeus, {nome_usuario.split()[0]}!")
-    aba = st.selectbox("Escolha uma seção", ["Treino", "Dieta da Semana", "Suplementos e Receitas", "Gerar PDF"])
-
-    # --- Treino ---
-    if aba == "Treino":
-        grupo = st.selectbox("Grupo muscular", list(treinos.keys()))
-        if st.button("Gerar Treino"):
-            treino = gerar_treino(grupo, objetivo_user)
-            st.subheader(f"Treino para {grupo} - {objetivo_user}")
-            for ex in treino:
-                st.write("- ", ex)
-            st.session_state["treino"] = treino
-
     # --- Dieta da Semana ---
     elif aba == "Dieta da Semana":
+        objetivo_dieta = user[7]
         if st.button("Gerar Dieta da Semana"):
-            dieta_dias = dietas_semanais.get(objetivo_user, {})
-            st.subheader(f"Dieta semanal para: {objetivo_user}")
+            dieta_dias = dietas_semanais.get(objetivo_dieta, {})
+            st.subheader(f"Dieta semanal para: {objetivo_dieta}")
             plano_dieta_semana = []
             for dia, refeicoes in dieta_dias.items():
                 st.markdown(f"{dia}")
@@ -244,14 +179,31 @@ if st.session_state["usuario"]:
 
     # --- Suplementos e Receitas ---
     elif aba == "Suplementos e Receitas":
+        objetivo = user[7]
         st.subheader("Suplementos indicados:")
-        for suplemento in dicas_suplementos(objetivo_user):
+        for suplemento in dicas_suplementos(objetivo):
             st.write("- ", suplemento)
         st.subheader("Receitas fitness:")
         for r in receitas_fitness():
             st.write("- ", r)
-            # ------------------ Treinos por grupo muscular e objetivo ------------------
 
+    # --- Geração de PDF ---
+    elif aba == "Gerar PDF":
+        conteudo_pdf = []
+        if "treino" in st.session_state:
+            conteudo_pdf.append("Treino:")
+            conteudo_pdf.extend(st.session_state["treino"])
+        if "dieta" in st.session_state:
+            conteudo_pdf.append("Dieta:")
+            conteudo_pdf.extend(st.session_state["dieta"])
+
+        if conteudo_pdf:
+            caminho_pdf = gerar_pdf(f"Plano Zeus - {nome_usuario}", conteudo_pdf)
+            with open(caminho_pdf, "rb") as f:
+                st.download_button("Baixar Plano em PDF", f, file_name=caminho_pdf)
+        else:
+            st.info("Nenhum conteúdo disponível para gerar PDF.")
+# === TREINOS POR GRUPO E OBJETIVO ===
 treinos = {
     "Peito": {
         "Hipertrofia": [
@@ -312,162 +264,50 @@ treinos = {
             "Desenvolvimento militar - 4x6",
             "Face pull com carga - 4x10"
         ]
-    },
-    "Bíceps": {
-        "Hipertrofia": [
-            "Rosca direta com barra - 4x10",
-            "Rosca martelo com halteres - 4x10",
-            "Rosca alternada - 4x10",
-            "Rosca concentrada - 3x12",
-            "Rosca Scott - 3x10"
-        ],
-        "Emagrecimento": [
-            "Rosca leve com alta repetição - 4x20",
-            "Rosca alternada leve - 4x20",
-            "Rosca com elástico - 3x25",
-            "Rosca com isometria - 3x30s",
-            "Circuito de bíceps - 3x20"
-        ],
-        "Resistência": [
-            "Rosca direta leve - 4x20",
-            "Rosca martelo com repetição contínua - 3x25",
-            "Rosca concentrada - 4x20",
-            "Rosca com tempo sob tensão - 3x20",
-            "Curl 21's leve - 3x7"
-        ],
-        "Ganho de Massa Muscular": [
-            "Rosca direta com barra pesada - 5x6",
-            "Rosca martelo com peso - 4x6",
-            "Rosca alternada com carga - 4x8",
-            "Rosca concentrada - 4x8",
-            "Rosca no cabo - 3x10"
-        ]
-    },
-    "Tríceps": {
-        "Hipertrofia": [
-            "Tríceps testa - 4x10",
-            "Tríceps pulley com barra - 4x10",
-            "Tríceps corda - 4x12",
-            "Mergulho entre bancos - 3x12",
-            "Tríceps francês - 3x10"
-        ],
-        "Emagrecimento": [
-            "Tríceps com elástico - 4x15",
-            "Flexão fechada - 3x20",
-            "Tríceps banco - 3x15",
-            "Pulley leve - 3x20",
-            "Extensão leve acima da cabeça - 3x20"
-        ],
-        "Resistência": [
-            "Tríceps contínuo no banco - 4x20",
-            "Tríceps corda leve - 3x25",
-            "Pulley com isometria - 3x30s",
-            "Flexão fechada isométrica - 3x20",
-            "Circuito de tríceps - 3x20"
-        ],
-        "Ganho de Massa Muscular": [
-            "Tríceps pulley pesado - 5x6",
-            "Tríceps francês com peso - 4x8",
-            "Tríceps corda pesado - 4x8",
-            "Mergulho com peso - 4x6",
-            "Supino fechado - 4x8"
-        ]
-    },
-    "Pernas": {
-        "Hipertrofia": [
-            "Agachamento livre - 4x10",
-            "Leg press - 4x10",
-            "Cadeira extensora - 3x12",
-            "Mesa flexora - 3x12",
-            "Stiff com barra - 4x8"
-        ],
-        "Emagrecimento": [
-            "Agachamento com peso corporal - 4x20",
-            "Afundo alternado - 4x15",
-            "Leg press leve - 4x15",
-            "Cadeira extensora leve - 3x20",
-            "Step-ups em banco - 3x15"
-        ],
-        "Resistência": [
-            "Agachamento - 4x20",
-            "Cadeira extensora leve - 3x20",
-            "Mesa flexora leve - 3x20",
-            "Afundo estático - 4x20",
-            "Polichinelos com agachamento - 3x25"
-        ],
-        "Ganho de Massa Muscular": [
-            "Agachamento livre pesado - 5x6",
-            "Leg press pesado - 5x8",
-            "Cadeira extensora pesada - 4x8",
-            "Mesa flexora pesada - 4x8",
-            "Avanço com halteres - 4x10"
-        ]
-    },
-    "Costas": {
-        "Hipertrofia": [
-            "Remada curvada com barra - 4x10",
-            "Puxada alta na polia - 4x10",
-            "Remada cavalinho - 4x10",
-            "Levantamento terra - 4x8",
-            "Remada unilateral - 4x10"
-        ],
-        "Emagrecimento": [
-            "Puxada alta leve - 4x15",
-            "Remada com elástico - 4x20",
-            "Remada inversa - 3x20",
-            "Puxada com triângulo - 3x15",
-            "Burpee com remada - 4x30s"
-        ],
-        "Resistência": [
-            "Remada leve - 4x20",
-            "Puxada aberta contínua - 3x25",
-            "Remada serrote leve - 3x20",
-            "Remada no banco - 4x20",
-            "Puxada com isometria - 3x30s"
-        ],
-        "Ganho de Massa Muscular": [
-            "Barra fixa com peso - 4x6",
-            "Remada curvada pesada - 5x6",
-            "Remada unilateral com halteres - 4x8",
-            "Puxada fechada - 4x8",
-            "Levantamento terra pesado - 4x6"
-        ]
-    },
-    "Glúteos": {
-        "Hipertrofia": [
-            "Elevação de quadril com barra - 4x10",
-            "Agachamento sumô - 4x10",
-            "Avanço com peso - 4x10",
-            "Cadeira abdutora - 3x12",
-            "Extensão de quadril na polia - 3x15"
-        ],
-        "Emagrecimento": [
-            "Glute bridge com peso corporal - 4x20",
-            "Agachamento lateral - 4x15",
-            "Elevação de quadril unilateral - 3x15",
-            "Afundo alternado - 3x20",
-            "Step up - 3x15"
-        ],
-        "Resistência": [
-            "Ponte de glúteo - 4x20",
-            "Agachamento com isometria - 3x30s",
-            "Extensão com elástico - 3x25",
-            "Cadeira abdutora leve - 3x20",
-            "Afundo com pausa - 3x20"
-        ],
-        "Ganho de Massa Muscular": [
-            "Hip thrust pesado - 5x6",
-            "Avanço com barra - 4x8",
-            "Extensão de quadril com carga - 4x8",
-            "Cadeira abdutora pesada - 4x10",
-            "Agachamento sumô com peso - 4x8"
-        ]
     }
+    # Adicione os outros grupos aqui se desejar (como Bíceps, Costas, Perna, etc.)
 }
 
 def gerar_treino(grupo, objetivo):
     return treinos.get(grupo, {}).get(objetivo, ["Nenhum treino disponível para essa combinação."])
 
-    
 
-       
+# === DIETAS POR OBJETIVO ===
+dietas_semanais = {
+    "Emagrecimento": {
+        "Segunda": [("Café da manhã", "1 ovo, pão integral, café", 250),
+                    ("Almoço", "Frango, arroz integral, salada", 400),
+                    ("Jantar", "Sopa de legumes", 300)],
+        "Terça": [("Café da manhã", "Iogurte com aveia", 220),
+                  ("Almoço", "Peixe, batata doce, salada", 370),
+                  ("Jantar", "Omelete com legumes", 280)],
+        "Quarta": [("Café da manhã", "Smoothie de frutas", 250),
+                   ("Almoço", "Tofu, quinoa, legumes", 360),
+                   ("Jantar", "Salada com grão-de-bico", 290)],
+        "Quinta": [("Café da manhã", "2 ovos, chá verde", 200),
+                   ("Almoço", "Frango, arroz integral, brócolis", 380),
+                   ("Jantar", "Caldo de frango", 300)],
+        "Sexta": [("Café da manhã", "Panqueca de aveia", 230),
+                  ("Almoço", "Frango, abóbora, couve", 360),
+                  ("Jantar", "Iogurte com chia", 280)]
+    },
+    "Hipertrofia": {
+        "Segunda": [("Café da manhã", "3 ovos, pão, banana", 450),
+                    ("Almoço", "Carne vermelha, arroz, legumes", 600),
+                    ("Jantar", "Frango, macarrão, salada", 500)],
+        "Terça": [("Café da manhã", "Omelete com espinafre", 480),
+                  ("Almoço", "Peixe, batata doce, salada", 600),
+                  ("Jantar", "Tofu com abóbora", 500)],
+        "Quarta": [("Café da manhã", "Shake de whey com aveia", 450),
+                   ("Almoço", "Frango, arroz, feijão, vegetais", 650),
+                   ("Jantar", "Omelete com batata doce", 520)],
+        "Quinta": [("Café da manhã", "Smoothie de proteína vegetal", 430),
+                   ("Almoço", "Carne moída, purê de batata", 630),
+                   ("Jantar", "Frango com legumes", 500)],
+        "Sexta": [("Café da manhã", "Pão integral com ovo", 420),
+                  ("Almoço", "Frango, arroz, lentilha", 640),
+                  ("Jantar", "Ovos com batata", 510)]
+    }
+}
+dietas_semanais["Ganho de Massa Muscular"] = dietas_semanais["Hipertrofia"]
+dietas_semanais["Manutenção"] = dietas_semanais["Emagrecimento"]
