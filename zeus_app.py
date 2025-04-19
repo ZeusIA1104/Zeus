@@ -183,6 +183,7 @@ elif menu == "Login":
 if st.session_state["usuario"]:
     user = st.session_state["usuario"]
     email_user = user[2]
+
     if email_user == ADMIN_EMAIL:"guibarcellosdaniel6@gmail.com"
         st.markdown("---")
         st.subheader("Painel do Administrador - Liberar Acesso Manual")
