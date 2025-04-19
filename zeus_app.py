@@ -468,7 +468,6 @@ treinos = {
 def gerar_treino(grupo, objetivo):
     return treinos.get(grupo, {}).get(objetivo, ["Nenhum treino disponível para essa combinação."])
 
-
     # --- Geração de PDF ---
     elif aba == "Gerar PDF":
         conteudo_pdf = []
