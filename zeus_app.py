@@ -78,7 +78,7 @@ def gerar_link_pagamento(nome_usuario, email_usuario):
         },
         "statement_descriptor": "ZEUS IA FITNESS",
         "external_reference": email_usuario,
-        "notification_url": "https://webhook.site/3d8f15f2-ae2c-46d3-b955-747bb52a9717",
+        "notification_url": "https://webhook.site/3d8b1f52-ae2c-46d3-b955-747bb52a9717",
         "auto_return": "approved"
     }
 
