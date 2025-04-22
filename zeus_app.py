@@ -59,6 +59,7 @@ def gerar_link_pagamento(nome_usuario, email_usuario):
         "Authorization": f"Bearer {ACCESS_TOKEN}",
         "Content-Type": "application/json"
     }
+
     body = {
         "items": [{
             "title": "Assinatura Mensal - ZEUS",
@@ -69,8 +70,16 @@ def gerar_link_pagamento(nome_usuario, email_usuario):
         "payer": {
             "name": nome_usuario,
             "email": email_usuario
-        }
+        },
+        "back_urls": {
+            "success": "https://zeusinteligente.streamlit.app",
+            "failure": "https://zeusinteligente.streamlit.app",
+            "pending": "https://zeusinteligente.streamlit.app"
+        },
+        "statement_descriptor": "ZEUS IA FITNESS",
+        "auto_return": "approved"
     }
+
     response = requests.post("https://api.mercadopago.com/checkout/preferences", headers=headers, json=body)
     if response.status_code == 201:
         return response.json()["init_point"]
