@@ -77,6 +77,7 @@ def gerar_link_pagamento(nome_usuario, email_usuario):
             "pending": "https://zeusinteligente.streamlit.app"
         },
         "statement_descriptor": "ZEUS IA FITNESS",
+        "external_reference": email_usuario,
         "auto_return": "approved"
     }
 
