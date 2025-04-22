@@ -91,7 +91,7 @@ def verificar_pagamento_por_nome(nome_usuario):
         nome_normalizado = normalizar_nome(nome_usuario)
         results = response.json().get("results", [])
         for pagamento in results:
-            payer_name = pagamento.get("payer", {}).get("first_name", "")
+            payer_name = pagamento.get("payer", {}).get("name", "")
             status = pagamento.get("status", "")
             if status == "approved":
                 payer_normalizado = normalizar_nome(payer_name)
