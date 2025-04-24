@@ -102,13 +102,19 @@ def verificar_pagamento_por_nome(nome_usuario):
 
     if response.status_code == 200:
         nome_normalizado = normalizar_nome(nome_usuario)
-        results = response.json().get("results", [])
-        for pagamento in results:
-            payer_name = pagamento.get("payer", {}).get("name", "")
+        resultados = response.json().get("results", [])
+        for pagamento in resultados:
             status = pagamento.get("status", "")
+            payer_info = pagamento.get("payer", {})
+            nome_pagador = payer_info.get("first_name", "") + " " + payer_info.get("last_name", "")
+            nome_pagador_normalizado = normalizar_nome(nome_pagador)
+
             if status == "approved":
-                payer_normalizado = normalizar_nome(payer_name)
-                if payer_normalizado in nome_normalizado or nome_normalizado in payer_normalizado:
+                # Confere se partes dos nomes se encontram
+                if (
+                    nome_pagador_normalizado in nome_normalizado
+                    or nome_normalizado in nome_pagador_normalizado
+                ):
                     return True
     return False
 
