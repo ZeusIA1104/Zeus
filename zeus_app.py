@@ -71,8 +71,6 @@ def gerar_link_pagamento(nome_usuario, email_usuario):
             "name": nome_usuario,
             "email": email_usuario
         },
-        "external_reference": email_usuario
-    }
         "back_urls": {
             "success": "https://zeusinteligente.streamlit.app",
             "failure": "https://zeusinteligente.streamlit.app",
