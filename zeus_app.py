@@ -4,6 +4,8 @@ import hashlib
 from fpdf import FPDF
 import requests
 import unicodedata
+import matplotlib.pyplot as plt
+from datetime import date
 
 # === CONFIG ===
 ACCESS_TOKEN = "APP_USR-507730409898756-041401-cfb0d18f342ea0b8ada862a23497b9ca-1026722362"
