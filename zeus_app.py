@@ -6,6 +6,7 @@ import requests
 import unicodedata
 import matplotlib.pyplot as plt
 from datetime import date
+import random
 
 # === CONFIG ===
 ACCESS_TOKEN = "APP_USR-507730409898756-041401-cfb0d18f342ea0b8ada862a23497b9ca-1026722362"
@@ -442,185 +443,157 @@ def gerar_treino(grupo, objetivo):
     return treinos.get(grupo, {}).get(objetivo, ["Nenhum treino disponível para essa combinação."])
 
 
-# === DIETAS SEMANAIS ===
-dietas_semanais = {
-    "Hipertrofia": {
-        "Segunda-feira": [
-            ("Café da manhã", "Ovos mexidos com aveia e banana", 450),
-            ("Almoço", "Arroz, feijão, frango grelhado e legumes", 700),
-            ("Café da tarde", "Sanduíche integral com pasta de amendoim", 400),
-            ("Jantar", "Batata doce com carne moída", 600)
-        ],
-        "Terça-feira": [
-            ("Café da manhã", "Panqueca de aveia com mel", 430),
-            ("Almoço", "Macarrão integral com carne moída e legumes", 720),
-            ("Café da tarde", "Vitamina de banana com aveia e leite", 450),
-            ("Jantar", "Omelete com arroz e salada", 580)
-        ],
-        "Quarta-feira": [
-            ("Café da manhã", "Whey com leite e tapioca com ovo", 480),
-            ("Almoço", "Arroz integral, feijão, frango grelhado", 700),
-            ("Café da tarde", "Iogurte natural com granola", 420),
-            ("Jantar", "Purê de batata com carne desfiada", 600)
-        ],
-        "Quinta-feira": [
-            ("Café da manhã", "Pão integral com ovo e queijo", 470),
-            ("Almoço", "Estrogonofe de frango com arroz e legumes", 710),
-            ("Café da tarde", "Mix de castanhas e frutas secas", 400),
-            ("Jantar", "Omelete com batata doce e salada", 590)
-        ],
-        "Sexta-feira": [
-            ("Café da manhã", "Tapioca com ovo e suco natural", 450),
-            ("Almoço", "Arroz, lentilha, bife grelhado, salada", 730),
-            ("Café da tarde", "Whey com leite e banana", 460),
-            ("Jantar", "Frango desfiado com purê de mandioca", 580)
-        ],
-        "Sábado": [
-            ("Café da manhã", "Ovos mexidos com pão integral", 440),
-            ("Almoço", "Arroz integral, frango e brócolis", 690),
-            ("Café da tarde", "Iogurte com granola", 420),
-            ("Jantar", "Batata inglesa, frango e legumes cozidos", 610)
-        ],
-        "Domingo": [
-            ("Café da manhã", "Panqueca proteica com mel e frutas", 470),
-            ("Almoço", "Feijoada magra com arroz e salada", 750),
-            ("Café da tarde", "Sanduíche natural com frango", 430),
-            ("Jantar", "Sopa de batata doce com frango", 580)
-        ]
-    },
-    "Emagrecimento": {
-        "Segunda-feira": [
-            ("Café da manhã", "Iogurte natural com chia e maçã", 220),
-            ("Almoço", "Peito de frango grelhado, arroz integral e legumes", 400),
-            ("Café da tarde", "Suco verde + castanhas", 200),
-            ("Jantar", "Omelete de claras com espinafre", 300)
-        ],
-        "Terça-feira": [
-            ("Café da manhã", "Vitamina de mamão com linhaça", 230),
-            ("Almoço", "Salada com atum, ovos e azeite", 410),
-            ("Café da tarde", "Torrada integral com cottage", 210),
-            ("Jantar", "Sopa de legumes com frango", 290)
-        ],
-        "Quarta-feira": [
-            ("Café da manhã", "Tapioca com ovo e chá verde", 240),
-            ("Almoço", "Filé de peixe grelhado com arroz integral", 420),
-            ("Café da tarde", "Banana com pasta de amendoim", 220),
-            ("Jantar", "Salada com frango desfiado", 310)
-        ],
-        "Quinta-feira": [
-            ("Café da manhã", "Ovos cozidos com tomate", 230),
-            ("Almoço", "Arroz integral, lentilha e peito de frango", 430),
-            ("Café da tarde", "Mix de frutas com chia", 210),
-            ("Jantar", "Omelete leve com legumes", 290)
-        ],
-        "Sexta-feira": [
-            ("Café da manhã", "Smoothie de frutas vermelhas", 210),
-            ("Almoço", "Frango grelhado, abobrinha, salada", 390),
-            ("Café da tarde", "Iogurte light com granola", 220),
-            ("Jantar", "Sopa leve de abóbora", 300)
-        ],
-        "Sábado": [
-            ("Café da manhã", "Tapioca com cottage", 240),
-            ("Almoço", "Peixe assado, arroz integral e salada", 410),
-            ("Café da tarde", "Suco natural e frutas secas", 200),
-            ("Jantar", "Salada completa com ovo cozido", 310)
-        ],
-        "Domingo": [
-            ("Café da manhã", "Ovo cozido com torrada integral", 230),
-            ("Almoço", "Frango grelhado e legumes refogados", 400),
-            ("Café da tarde", "Torradas com pasta de amendoim", 220),
-            ("Jantar", "Sopa detox de legumes", 280)
-        ]
-    },
-    "Manutenção": {
-        "Segunda-feira": [
-            ("Café da manhã", "Pão integral com ovo mexido", 350),
-            ("Almoço", "Arroz, feijão, frango e salada", 650),
-            ("Café da tarde", "Iogurte com frutas", 300),
-            ("Jantar", "Omelete com legumes", 400)
-        ],
-        "Terça-feira": [
-            ("Café da manhã", "Panqueca de banana com aveia", 360),
-            ("Almoço", "Macarrão com carne e legumes", 670),
-            ("Café da tarde", "Mix de castanhas", 320),
-            ("Jantar", "Arroz e frango desfiado com cenoura", 420)
-        ],
-        "Quarta-feira": [
-            ("Café da manhã", "Tapioca com queijo e chá", 340),
-            ("Almoço", "Frango grelhado, arroz e salada", 630),
-            ("Café da tarde", "Fruta com aveia", 290),
-            ("Jantar", "Sopa de legumes", 390)
-        ],
-        "Quinta-feira": [
-            ("Café da manhã", "Pão integral com pasta de amendoim", 360),
-            ("Almoço", "Estrogonofe leve, arroz e batata palha", 640),
-            ("Café da tarde", "Suco com torradas", 300),
-            ("Jantar", "Omelete com legumes", 410)
-        ],
-        "Sexta-feira": [
-            ("Café da manhã", "Ovos mexidos com tapioca", 340),
-            ("Almoço", "Arroz, feijão, carne moída e couve", 650),
-            ("Café da tarde", "Iogurte com chia", 290),
-            ("Jantar", "Sanduíche natural", 400)
-        ],
-        "Sábado": [
-            ("Café da manhã", "Vitamina com leite, banana e aveia", 370),
-            ("Almoço", "Feijão tropeiro leve com salada", 670),
-            ("Café da tarde", "Frutas secas e chá", 280),
-            ("Jantar", "Sopa de frango", 400)
-        ],
-        "Domingo": [
-            ("Café da manhã", "Pão integral com ovo", 350),
-            ("Almoço", "Arroz, frango grelhado e brócolis", 640),
-            ("Café da tarde", "Banana com mel", 300),
-            ("Jantar", "Macarrão leve com molho caseiro", 420)
-        ]
-    },
-    "Ganho de Massa Muscular": {
-        "Segunda-feira": [
-            ("Café da manhã", "Ovos com batata doce", 500),
-            ("Almoço", "Arroz, feijão, carne e salada", 720),
-            ("Café da tarde", "Whey protein com aveia e banana", 460),
-            ("Jantar", "Purê de batata com frango desfiado", 630)
-        ],
-        "Terça-feira": [
-            ("Café da manhã", "Panqueca de aveia e mel", 470),
-            ("Almoço", "Arroz integral, frango e legumes", 710),
-            ("Café da tarde", "Iogurte, banana e granola", 440),
-            ("Jantar", "Batata doce com carne moída", 600)
-        ],
-        "Quarta-feira": [
-            ("Café da manhã", "Tapioca com ovo e queijo", 450),
-            ("Almoço", "Macarrão com carne e brócolis", 720),
-            ("Café da tarde", "Sanduíche de atum com integral", 470),
-            ("Jantar", "Frango com mandioca cozida", 620)
-        ],
-        "Quinta-feira": [
-            ("Café da manhã", "Omelete com aveia", 480),
-            ("Almoço", "Arroz, lentilha e carne", 700),
-            ("Café da tarde", "Whey com banana e pasta de amendoim", 480),
-            ("Jantar", "Frango com purê e salada", 610)
-        ],
-        "Sexta-feira": [
-            ("Café da manhã", "Pão integral com ovos", 460),
-            ("Almoço", "Arroz, feijão, frango grelhado", 730),
-            ("Café da tarde", "Shake de proteína com frutas", 450),
-            ("Jantar", "Tapioca com frango e salada", 600)
-        ],
-        "Sábado": [
-            ("Café da manhã", "Vitamina de frutas com aveia", 470),
-            ("Almoço", "Carne moída, arroz e legumes", 710),
-            ("Café da tarde", "Pão integral com queijo", 440),
-            ("Jantar", "Frango grelhado com batata inglesa", 630)
-        ],
-        "Domingo": [
-            ("Café da manhã", "Whey + banana + aveia", 460),
-            ("Almoço", "Feijoada magra com arroz e couve", 750),
-            ("Café da tarde", "Torradas com ovo", 430),
-            ("Jantar", "Massa integral com carne moída", 640)
-        ]
+elif menu_principal == "Dieta da Semana":
+    st.subheader("Dieta Interativa - Zeus IA")
+
+    dias_semana = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"]
+    dia_escolhido = st.selectbox("Escolha o dia da semana", dias_semana)
+
+    objetivo = objetivo_user  # vindo do usuário logado
+
+    # Todas as refeições para cada objetivo
+    base_dieta = {
+        "Hipertrofia": {
+            "Café da manhã": [
+                {"desc": "Ovos mexidos com banana", "kcal": 340, "proteina": 26, "carbo": 28, "gordura": 15},
+                {"desc": "Tapioca com ovo e queijo", "kcal": 360, "proteina": 24, "carbo": 32, "gordura": 14},
+                {"desc": "Panqueca de aveia com mel", "kcal": 380, "proteina": 22, "carbo": 36, "gordura": 12}
+            ],
+            "Almoço": [
+                {"desc": "Arroz, feijão, frango grelhado e legumes", "kcal": 700, "proteina": 48, "carbo": 60, "gordura": 22},
+                {"desc": "Macarrão integral com carne moída", "kcal": 720, "proteina": 45, "carbo": 58, "gordura": 25},
+                {"desc": "Batata doce com carne moída e salada", "kcal": 680, "proteina": 40, "carbo": 55, "gordura": 20}
+            ],
+            "Café da tarde": [
+                {"desc": "Vitamina de banana com aveia e leite", "kcal": 380, "proteina": 28, "carbo": 34, "gordura": 10},
+                {"desc": "Sanduíche integral com pasta de amendoim", "kcal": 400, "proteina": 22, "carbo": 36, "gordura": 16},
+                {"desc": "Whey com banana", "kcal": 340, "proteina": 30, "carbo": 22, "gordura": 6}
+            ],
+            "Jantar": [
+                {"desc": "Omelete com batata doce", "kcal": 450, "proteina": 32, "carbo": 38, "gordura": 14},
+                {"desc": "Frango desfiado com purê de mandioca", "kcal": 480, "proteina": 34, "carbo": 42, "gordura": 16},
+                {"desc": "Sopa de legumes com frango", "kcal": 430, "proteina": 28, "carbo": 30, "gordura": 12}
+            ]
+        },
+
+        "Emagrecimento": {
+            "Café da manhã": [
+                {"desc": "Iogurte com chia e morango", "kcal": 200, "proteina": 15, "carbo": 12, "gordura": 7},
+                {"desc": "Vitamina de mamão com linhaça", "kcal": 220, "proteina": 12, "carbo": 18, "gordura": 6},
+                {"desc": "Tapioca com ovo e chá verde", "kcal": 210, "proteina": 14, "carbo": 15, "gordura": 6}
+            ],
+            "Almoço": [
+                {"desc": "Peito de frango grelhado, arroz integral e legumes", "kcal": 400, "proteina": 38, "carbo": 30, "gordura": 12},
+                {"desc": "Salada com atum, ovos e azeite", "kcal": 410, "proteina": 32, "carbo": 18, "gordura": 18},
+                {"desc": "Sopa de legumes com frango", "kcal": 390, "proteina": 28, "carbo": 25, "gordura": 10}
+            ],
+            "Café da tarde": [
+                {"desc": "Torradas integrais com cottage", "kcal": 180, "proteina": 12, "carbo": 18, "gordura": 4},
+                {"desc": "Banana com pasta de amendoim", "kcal": 220, "proteina": 8, "carbo": 20, "gordura": 10},
+                {"desc": "Suco verde com castanhas", "kcal": 200, "proteina": 6, "carbo": 15, "gordura": 8}
+            ],
+            "Jantar": [
+                {"desc": "Omelete de claras com espinafre", "kcal": 300, "proteina": 30, "carbo": 10, "gordura": 8},
+                {"desc": "Sopa detox de abóbora", "kcal": 280, "proteina": 18, "carbo": 20, "gordura": 6},
+                {"desc": "Salada com frango desfiado", "kcal": 290, "proteina": 26, "carbo": 12, "gordura": 10}
+            ]
+        },
+
+        "Manutenção": {
+            "Café da manhã": [
+                {"desc": "Pão integral com ovo mexido", "kcal": 300, "proteina": 18, "carbo": 28, "gordura": 10},
+                {"desc": "Panqueca de banana com aveia", "kcal": 330, "proteina": 20, "carbo": 32, "gordura": 10},
+                {"desc": "Whey com leite e banana", "kcal": 310, "proteina": 26, "carbo": 22, "gordura": 6}
+            ],
+            "Almoço": [
+                {"desc": "Arroz, feijão, frango e salada", "kcal": 650, "proteina": 42, "carbo": 55, "gordura": 20},
+                {"desc": "Estrogonofe leve com arroz", "kcal": 620, "proteina": 40, "carbo": 52, "gordura": 18},
+                {"desc": "Frango grelhado com batata inglesa e legumes", "kcal": 660, "proteina": 45, "carbo": 50, "gordura": 20}
+            ],
+            "Café da tarde": [
+                {"desc": "Iogurte natural com frutas", "kcal": 260, "proteina": 15, "carbo": 25, "gordura": 8},
+                {"desc": "Suco natural e torradas", "kcal": 280, "proteina": 12, "carbo": 30, "gordura": 6},
+                {"desc": "Banana com aveia", "kcal": 270, "proteina": 10, "carbo": 28, "gordura": 6}
+            ],
+            "Jantar": [
+                {"desc": "Omelete com legumes", "kcal": 390, "proteina": 28, "carbo": 18, "gordura": 14},
+                {"desc": "Sopa de frango com batata doce", "kcal": 400, "proteina": 30, "carbo": 28, "gordura": 12},
+                {"desc": "Arroz com frango desfiado e salada", "kcal": 420, "proteina": 32, "carbo": 30, "gordura": 14}
+            ]
+        },
+
+        "Ganho de Massa Muscular": {
+            "Café da manhã": [
+                {"desc": "Ovos com batata doce", "kcal": 420, "proteina": 28, "carbo": 36, "gordura": 16},
+                {"desc": "Panqueca proteica com mel", "kcal": 440, "proteina": 30, "carbo": 35, "gordura": 14},
+                {"desc": "Tapioca com frango desfiado", "kcal": 400, "proteina": 26, "carbo": 32, "gordura": 12}
+            ],
+            "Almoço": [
+                {"desc": "Feijão tropeiro com arroz e carne", "kcal": 750, "proteina": 50, "carbo": 58, "gordura": 28},
+                {"desc": "Frango grelhado com macarrão e legumes", "kcal": 720, "proteina": 46, "carbo": 60, "gordura": 22},
+                {"desc": "Arroz, carne moída e couve", "kcal": 700, "proteina": 45, "carbo": 50, "gordura": 24}
+            ],
+            "Café da tarde": [
+                {"desc": "Whey com aveia e banana", "kcal": 420, "proteina": 32, "carbo": 30, "gordura": 10},
+                {"desc": "Shake proteico com leite e frutas", "kcal": 450, "proteina": 35, "carbo": 38, "gordura": 12},
+                {"desc": "Sanduíche integral com peito de frango", "kcal": 400, "proteina": 28, "carbo": 34, "gordura": 12}
+            ],
+            "Jantar": [
+                {"desc": "Frango grelhado com purê de batata", "kcal": 500, "proteina": 35, "carbo": 40, "gordura": 16},
+                {"desc": "Tapioca com ovo e salada", "kcal": 460, "proteina": 30, "carbo": 32, "gordura": 14},
+                {"desc": "Batata doce com carne desfiada", "kcal": 520, "proteina": 38, "carbo": 42, "gordura": 18}
+            ]
+        }
     }
-}
+
+    opcoes_refeicoes = base_dieta.get(objetivo, {})
+
+    if "cardapio" not in st.session_state:
+        st.session_state.cardapio = {}
+
+    total_kcal = total_proteina = total_carbo = total_gordura = 0
+
+    for refeicao, opcoes in opcoes_refeicoes.items():
+        chave_ref = f"{dia_escolhido}{refeicao}{objetivo}"
+        if chave_ref not in st.session_state.cardapio:
+            st.session_state.cardapio[chave_ref] = random.choice(opcoes)
+
+        atual = st.session_state.cardapio[chave_ref]
+
+        st.markdown(f"### {refeicao}")
+        st.write(f"*{atual['desc']}*")
+        col1, col2, col3, col4 = st.columns(4)
+        col1.metric("Calorias", f"{atual['kcal']} kcal")
+        col2.metric("Proteína", f"{atual['proteina']} g")
+        col3.metric("Carbo", f"{atual['carbo']} g")
+        col4.metric("Gordura", f"{atual['gordura']} g")
+
+        total_kcal += atual["kcal"]
+        total_proteina += atual["proteina"]
+        total_carbo += atual["carbo"]
+        total_gordura += atual["gordura"]
+
+        if st.button(f"Quero variar - {refeicao} ({dia_escolhido})"):
+            nova = random.choice([r for r in opcoes if r != atual])
+            st.session_state.cardapio[chave_ref] = nova
+            st.experimental_rerun()
+
+    st.markdown("---")
+    st.subheader("Resumo Nutricional do Dia")
+    st.write(f"*Total de Calorias:* {total_kcal} kcal")
+    st.write(f"*Proteínas:* {total_proteina} g")
+    st.write(f"*Carboidratos:* {total_carbo} g")
+    st.write(f"*Gorduras:* {total_gordura} g")
+
+    # Gráfico de pizza
+    st.subheader("Distribuição dos Macronutrientes")
+    labels = ['Proteína', 'Carboidratos', 'Gordura']
+    valores = [total_proteina, total_carbo, total_gordura]
+
+    fig, ax = plt.subplots()
+    ax.pie(valores, labels=labels, autopct='%1.1f%%', startangle=90)
+    ax.axis('equal')
+    st.pyplot(fig)
 
 def dicas_suplementos(objetivo):
     if objetivo == "Hipertrofia":
