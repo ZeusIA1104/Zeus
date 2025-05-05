@@ -136,6 +136,10 @@ def gerar_pdf(titulo, conteudo):
 st.set_page_config(page_title="ZEUS", layout="centered")
 criar_banco()
 st.title("ZEUS - Acesso")
+# === INTERFACE INICIAL COM LOGO ===
+criar_banco()
+st.image("logo_zeus.png", width=150)
+st.markdown("<h2 style='color:#8A2BE2'>ZEUS - Acesso Inteligente</h2>", unsafe_allow_html=True)
 
 if "usuario" not in st.session_state:
     st.session_state["usuario"] = None
