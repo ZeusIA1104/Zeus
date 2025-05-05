@@ -442,7 +442,6 @@ treinos = {
 def gerar_treino(grupo, objetivo):
     return treinos.get(grupo, {}).get(objetivo, ["Nenhum treino disponível para essa combinação."])
 
-
 elif menu_principal == "Dieta da Semana":
     st.subheader("Dieta Interativa - Zeus IA")
 
